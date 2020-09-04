@@ -76,11 +76,8 @@ public class RecordPane extends GridPane {
 		addRow(recordJsons.size(), nodes.toArray(new Node[0]));
 	}
 	
-	public void clear() {
-		getChildren().clear();
-		this.setAlignment(Pos.CENTER);
-		this.setGridLinesVisible(true);
-		addRow(0, HEADER);
+	public void clearContent() {
+		getChildren().remove(HEADER.length, getChildren().size());
 		recordJsons.clear();
 	}
 }

@@ -1,7 +1,6 @@
 package application;
 
 import java.sql.Connection;
-import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

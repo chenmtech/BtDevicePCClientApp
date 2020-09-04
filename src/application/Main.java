@@ -20,15 +20,16 @@ import javafx.stage.Stage;
 
 
 public class Main extends Application {
+	private static final String TITLE = "欢迎使用康明智联PC客户端";
 	private StatusInfoPane infoPane;
 	private RecordPane recordPane;
 	private DbOperator dbOperator;
-	private long fromTime = new Date().getTime();;
+	private long fromTime = new Date().getTime();
 	
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			infoPane = new StatusInfoPane("欢迎使用康明智联PC客户端");
+			infoPane = new StatusInfoPane("等待操作...");
 			
 			recordPane = new RecordPane(this);
 			
@@ -37,7 +38,7 @@ public class Main extends Application {
 			btnBox.setSpacing(10);
 			Button btnConnect = new Button("测试连接");
 			Button btnRestart = new Button("重新加载");
-			Button btnQuery = new Button("加载记录");
+			Button btnQuery = new Button("继续加载记录");
 			btnBox.getChildren().addAll(btnConnect, btnRestart, btnQuery);
 			
 			btnConnect.setOnAction(new EventHandler<ActionEvent>() {
@@ -50,7 +51,7 @@ public class Main extends Application {
 			btnRestart.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
-					recordPane.clear();
+					recordPane.clearContent();
 					RecordType type = RecordType.ALL;
 					String creatorPlat = "";
 					String creatorId = "";
@@ -79,8 +80,8 @@ public class Main extends Application {
 			root.setBottom(btnBox);
 			root.setPadding(new Insets(10,10,10,10));
 			Scene scene = new Scene(root,800,800);
-			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
+			primaryStage.setTitle(TITLE);
 			primaryStage.show();
 			
 			dbOperator  = new DbOperator(this);
