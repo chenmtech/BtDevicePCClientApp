@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.util.Date;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.dbUtil.DbUtil;
@@ -30,10 +31,10 @@ public class DbOperator {
 			public void run() {
 				Connection conn = DbUtil.connect();
 				if(conn != null) {
-					Platform.runLater(()->main.updateText("数据库连接正常"));
+					Platform.runLater(()->main.updateStatusInfo("数据库连接正常"));
 					DbUtil.disconnect(conn);
 				} else {
-					Platform.runLater(()->main.updateText("数据库连接失败"));
+					Platform.runLater(()->main.updateStatusInfo("数据库连接失败"));
 				}				
 			}
 		});
@@ -46,22 +47,37 @@ public class DbOperator {
 		}
 	}
 	
-	public void queryRecord() {
+	public void queryRecord(RecordType type, String creatorPlat, String creatorId, long fromTime, String noteSearchStr, int num) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RecordType type = RecordType.ALL;
-				String creatorPlat = "PH";
-				String creatorId = "8615019187404";
-				long fromTime = new Date().getTime();
-				String noteSearchStr = "";
-				int num = 20;
 				JSONArray basicInfoJsons = RecordDbUtil.downloadBasicInfo(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
 				if(basicInfoJsons != null) {
 					Platform.runLater(()->main.updateRecordBasicInfoList(basicInfoJsons));
 				} else {
-					Platform.runLater(()->main.updateText("找不到记录"));
+					Platform.runLater(()->main.updateStatusInfo("找不到记录"));
 				}		
+			}
+		});
+		thread.start();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void downloadRecord(RecordType type, long createTime, String devAddress) {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				JSONObject json = RecordDbUtil.download(type, createTime, devAddress);
+				if(json != null) {
+					Platform.runLater(()->main.openRecord(json));
+				} else {
+					Platform.runLater(()->main.updateStatusInfo("下载记录失败"));
+				}
 			}
 		});
 		thread.start();
