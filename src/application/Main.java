@@ -41,7 +41,7 @@ public class Main extends Application implements IDbOperationCallback{
 	public void start(Stage primaryStage) {
 		try {
 			this.primaryStage = primaryStage;
-			infoPane.setInfo("等待操作...");
+			infoPane.setInfo("请先登录。");
 			CtrlPane ctrlPane = new CtrlPane(this);
 			
 			BorderPane root = new BorderPane();
