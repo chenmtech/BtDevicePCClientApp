@@ -24,10 +24,11 @@ public class DbOperator {
 		DbUtil.setDbAddress(dbAddress);
 	}
 	
-	public void testConnect() {
+	public void testConnect(String name, String password) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
+				DbUtil.setUserInfo(name, password);
 				Connection conn = DbUtil.connect();
 				if(conn != null) {
 					Platform.runLater(()->callback.onLoginUpdated(true));
