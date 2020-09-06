@@ -18,12 +18,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.text.TextAlignment;
 
 public class RecordPane extends GridPane {
-	private static final Node[] HEADER;
+	//private static final Node[] HEADER;
 	private static final String[] HEADER_TITLES = {"记录类型", "版本号", "创建者账户", "创建时间", "设备地址", "备注", "记录时长(秒)", "操作"};
 	private final List<JSONObject> recordJsons = new ArrayList<>();
 	private final Main main;
 	
-	static {
+/*	static {
 		List<Node> nodes = new ArrayList<>();
 		for(String str : HEADER_TITLES) {
 			Label label = new Label(str);
@@ -31,13 +31,24 @@ public class RecordPane extends GridPane {
 			nodes.add(label);
 		}
 		HEADER = nodes.toArray(new Node[0]);
-	}
+	}*/
 	
 	public RecordPane(Main main) {
 		this.main = main;
-		this.setAlignment(Pos.CENTER);
+		this.setAlignment(Pos.BOTTOM_LEFT);
 		this.setGridLinesVisible(true);
-		addRow(0, HEADER);
+		setStyle("-fx-border-color:red");
+		
+		List<Node> nodes = new ArrayList<>();
+		for(String str : HEADER_TITLES) {
+			Label label = new Label(str);
+			label.setTextAlignment(TextAlignment.CENTER);
+			label.setAlignment(Pos.CENTER);
+			label.prefWidthProperty().bind(widthProperty().divide(8));
+			label.maxWidthProperty().bind(widthProperty().divide(4));
+			nodes.add(label);
+		}
+		addRow(0, nodes.toArray(new Node[0]));
 	}
 	
 	public void addRecord(JSONObject json) {
@@ -77,7 +88,7 @@ public class RecordPane extends GridPane {
 	}
 	
 	public void clearContent() {
-		getChildren().remove(HEADER.length, getChildren().size());
+		getChildren().remove(HEADER_TITLES.length+1, getChildren().size());
 		recordJsons.clear();
 	}
 }

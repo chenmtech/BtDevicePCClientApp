@@ -8,16 +8,10 @@ import org.json.JSONObject;
 import com.cmtech.web.btdevice.RecordType;
 
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 
@@ -32,7 +26,6 @@ public class Main extends Application implements IDbOperationCallback{
 	public void start(Stage primaryStage) {
 		try {
 			infoPane.setInfo("等待操作...");
-			
 			CtrlPane ctrlPane = new CtrlPane(this);
 			
 			BorderPane root = new BorderPane();
@@ -40,7 +33,9 @@ public class Main extends Application implements IDbOperationCallback{
 			root.setCenter(new ScrollPane(recordPane));
 			root.setBottom(ctrlPane);
 			root.setPadding(new Insets(10,10,10,10));
+			
 			Scene scene = new Scene(root,800,800);
+			recordPane.prefWidthProperty().bind(scene.widthProperty());
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(TITLE);
 			primaryStage.show();
