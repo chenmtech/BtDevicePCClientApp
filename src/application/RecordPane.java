@@ -72,7 +72,7 @@ public class RecordPane extends GridPane {
 			int recordSecond = json.getInt("recordSecond");
 			recordSecondStr = secondToTime(recordSecond);
 		}
-		Button btnGet = new Button("保存记录");
+		Button btnGet = new Button("导出记录");
 		btnGet.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
