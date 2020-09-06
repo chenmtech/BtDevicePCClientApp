@@ -13,14 +13,14 @@ import javafx.application.Platform;
 
 public class DbOperator {
 	public static final String DEFAULT_DB_ADDRESS = "203.195.137.198:3306";
-	private final Main main;
+	private final IDbOperationCallback callback;
 	
-	public DbOperator(Main main) {
-		this(main, DEFAULT_DB_ADDRESS);
+	public DbOperator(IDbOperationCallback callback) {
+		this(callback, DEFAULT_DB_ADDRESS);
 	}
 	
-	public DbOperator(Main main, String dbAddress) {
-		this.main = main;
+	public DbOperator(IDbOperationCallback callback, String dbAddress) {
+		this.callback = callback;
 		DbUtil.setDbAddress(dbAddress);
 	}
 	
@@ -30,10 +30,10 @@ public class DbOperator {
 			public void run() {
 				Connection conn = DbUtil.connect();
 				if(conn != null) {
-					Platform.runLater(()->main.updateStatusInfo("数据库连接正常"));
+					Platform.runLater(()->callback.onLoginUpdated(true));
 					DbUtil.disconnect(conn);
 				} else {
-					Platform.runLater(()->main.updateStatusInfo("数据库连接失败"));
+					Platform.runLater(()->callback.onLoginUpdated(false));
 				}				
 			}
 		});
@@ -51,11 +51,7 @@ public class DbOperator {
 			@Override
 			public void run() {
 				JSONArray basicInfoJsons = RecordDbUtil.downloadBasicInfo(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
-				if(basicInfoJsons != null) {
-					Platform.runLater(()->main.updateRecordBasicInfoList(basicInfoJsons));
-				} else {
-					Platform.runLater(()->main.updateStatusInfo("找不到记录"));
-				}		
+				Platform.runLater(()->callback.onRecordBasicInfoListUpdated(basicInfoJsons));
 			}
 		});
 		thread.start();
@@ -72,11 +68,7 @@ public class DbOperator {
 			@Override
 			public void run() {
 				JSONObject json = RecordDbUtil.download(type, createTime, devAddress);
-				if(json != null) {
-					Platform.runLater(()->main.openRecord(json));
-				} else {
-					Platform.runLater(()->main.updateStatusInfo("下载记录失败"));
-				}
+				Platform.runLater(()->callback.onRecordDownloaded(json));
 			}
 		});
 		thread.start();
