@@ -46,7 +46,7 @@ public class CtrlPane extends HBox{
 		getChildren().add(tfNoteSearchStr);
 		
 		Button btnLogin = new Button("登录");
-		Button btnReload = new Button("重新查询");
+		Button btnReload = new Button("开始查询");
 		Button btnLoadNext = new Button("继续查询");
 		getChildren().addAll(btnLogin, btnReload, btnLoadNext);
 		

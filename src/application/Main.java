@@ -154,7 +154,7 @@ public class Main extends Application implements IDbOperationCallback{
             fileChooser.setTitle("文件保存对话框");
             //设置将当前目录作为初始显示目录
             fileChooser.setInitialDirectory(new File("."));
-            String defaultName = json.getLong("createTime") + json.getString("devAddress");
+            String defaultName = createJsonFileName(RecordType.getName(json.getInt("recordTypeCode")), json.getLong("createTime") , json.getString("devAddress"));
             fileChooser.setInitialFileName(defaultName);
             //创建文件选择过滤器
             FileChooser.ExtensionFilter filter =
@@ -172,6 +172,10 @@ public class Main extends Application implements IDbOperationCallback{
 				}
             }
 		}
+	}
+	
+	private String createJsonFileName(String type, long createTime, String devAddress) {
+		return type + createTime + "(" +devAddress.replace(":", "-") + ")";		
 	}
 	
 	private class LoginStage extends Stage{	
