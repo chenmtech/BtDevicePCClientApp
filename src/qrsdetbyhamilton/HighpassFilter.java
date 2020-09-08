@@ -8,8 +8,8 @@ public class HighpassFilter {
 	private int ptr = 0 ;
 	
 	public HighpassFilter(int SAMPLE_RATE) {
-		double MS_PER_SAMPLE =  (double) 1000/ (double) SAMPLE_RATE;
-		int MS125 =	((int) (125/MS_PER_SAMPLE + 0.5));
+		double MS_PER_SAMPLE = 1000.0/SAMPLE_RATE;
+		int MS125 =	(int)Math.round(125.0/MS_PER_SAMPLE);//((int) (125/MS_PER_SAMPLE + 0.5));
 		
 		HPBUFFER_LGTH = (MS125/2)*2+1;	// 保证为奇数
 		data = new int[HPBUFFER_LGTH];

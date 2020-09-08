@@ -7,8 +7,8 @@ public class Derivative {
 	private int derI = 0 ;
 	
 	public Derivative(int SAMPLE_RATE) {
-		double MS_PER_SAMPLE =  (double) 1000/ (double) SAMPLE_RATE;
-		int MS10 = ((int) (10/ MS_PER_SAMPLE + 0.5));
+		double MS_PER_SAMPLE = 1000.0/SAMPLE_RATE;
+		int MS10 = (int)Math.round(10.0/MS_PER_SAMPLE);//((int) (10/ MS_PER_SAMPLE + 0.5));
 		
 		DERIV_LENGTH = MS10;
 		derBuff = new int[DERIV_LENGTH];

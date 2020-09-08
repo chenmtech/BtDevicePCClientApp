@@ -1,5 +1,8 @@
 package application;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Calendar;
@@ -17,6 +20,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 
 public class CtrlPane extends HBox{
 	
@@ -48,7 +52,8 @@ public class CtrlPane extends HBox{
 		Button btnLogin = new Button("登录");
 		Button btnReload = new Button("开始查询");
 		Button btnLoadNext = new Button("继续查询");
-		getChildren().addAll(btnLogin, btnReload, btnLoadNext);
+		Button btnProcessSignal = new Button("处理信号");
+		getChildren().addAll(btnLogin, btnReload, btnLoadNext, btnProcessSignal);
 		
 		btnLogin.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -74,6 +79,13 @@ public class CtrlPane extends HBox{
 			@Override
 			public void handle(ActionEvent event) {
 				main.loadNext(cboType.getValue(), tfCreator.getText(), tfNoteSearchStr.getText());
+			}
+		});
+		
+		btnProcessSignal.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				main.processRecord();
 			}
 		});
 	}

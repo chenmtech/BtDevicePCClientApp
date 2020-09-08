@@ -9,8 +9,8 @@ public class LowpassFilter {
 	private int ptr = 0;
 	
 	public LowpassFilter(int SAMPLE_RATE) {
-		double MS_PER_SAMPLE =  (double) 1000/ (double) SAMPLE_RATE;
-		int MS25 = (int) (25/MS_PER_SAMPLE + 0.5);
+		double MS_PER_SAMPLE =  1000.0/SAMPLE_RATE;
+		int MS25 = (int)Math.round(25.0/MS_PER_SAMPLE);// (int) (25/MS_PER_SAMPLE + 0.5);
 		
 		LPBUFFER_LGTH = 2*MS25;		// 一定是偶数
 		data = new int[LPBUFFER_LGTH];

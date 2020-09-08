@@ -1,9 +1,14 @@
 package application;
 	
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,10 +31,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import qrsdetbyhamilton.QrsDetectorWithRPosition;
 
 
 public class Main extends Application implements IDbOperationCallback{
 	private static final String TITLE = "欢迎使用康明智联PC客户端";
+	private static final String DEFAULT_JSON_FILE_DIR = "F:\\360云盘\\360同步文件夹\\科研\\data\\jsonfile";
 	public static final Account ACCOUNT = new Account();
 	private Stage primaryStage;
 	private final InfoPane infoPane = new InfoPane();;
@@ -116,6 +123,71 @@ public class Main extends Application implements IDbOperationCallback{
 		dbOperator.downloadRecord(type, createTime, devAddress);
 	}
 	
+	public void processRecord() {
+		if(!ACCOUNT.isLogin()) {
+			//login();
+			//return;
+		}
+		
+		FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("选择需处理的信号JSON文件");
+        //设置将当前目录作为初始显示目录
+        fileChooser.setInitialDirectory(new File(DEFAULT_JSON_FILE_DIR));
+        //创建文件选择过滤器
+        FileChooser.ExtensionFilter filter =
+                new FileChooser.ExtensionFilter("JSON文件","*.json");
+        //设置文件过滤器
+        fileChooser.getExtensionFilters().add(filter);
+        File file = fileChooser.showOpenDialog(primaryStage);
+        if(file != null){
+        	try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        		String tempString = null;
+                StringBuilder jsonStrBuilder = new StringBuilder();
+                // 一次读入一行，直到读入null为文件结束
+                while ((tempString = reader.readLine()) != null) {
+                    jsonStrBuilder.append(tempString);
+                }
+                JSONObject json = new JSONObject(jsonStrBuilder.toString());
+                System.out.println(json.toString());
+                RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
+                if(type != RecordType.ECG) {
+                	infoPane.setInfo("暂时无法处理该类型信号。");
+                	return;
+                }
+                String ecgStr = json.getString("ecgData");
+                String[] ecgDataStr = ecgStr.split(",");
+                List<Short> ecgData = new ArrayList<>();
+                for(String str : ecgDataStr) {
+                	ecgData.add(Short.parseShort(str));
+                }
+                int sampleRate = json.getInt("sampleRate");
+                int caliValue = json.getInt("caliValue");
+                final JSONObject[] jsonArr = new JSONObject[1];
+                Thread thProcess = new Thread(new Runnable() {
+        			@Override
+        			public void run() {
+        				jsonArr[0] = processEcgData(ecgData, sampleRate, caliValue);
+        			}			
+        		});
+        		thProcess.start();
+        		String srcFileName = file.getAbsolutePath();
+        		String tgtFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.')) + "-review.json";
+        		File out = new File(tgtFileName);
+        		try(PrintWriter write = new PrintWriter(out)) {
+        			thProcess.join();
+        			write.print(jsonArr[0].toString());
+        			infoPane.setInfo("已将处理结果保存到文件中。");
+        		} catch (InterruptedException e) {
+        			infoPane.setInfo("处理被中断。");
+        			e.printStackTrace();
+        		}
+        	} catch (IOException e) {
+        		infoPane.setInfo("处理信号失败");
+				e.printStackTrace();
+			}
+        }
+	}
+	
 	@Override
 	public void onLoginUpdated(boolean success) {
 		if(success)
@@ -153,7 +225,7 @@ public class Main extends Application implements IDbOperationCallback{
 			FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("文件保存对话框");
             //设置将当前目录作为初始显示目录
-            fileChooser.setInitialDirectory(new File("."));
+            fileChooser.setInitialDirectory(new File(DEFAULT_JSON_FILE_DIR));
             String defaultName = createJsonFileName(RecordType.getName(json.getInt("recordTypeCode")), json.getLong("createTime") , json.getString("devAddress"));
             fileChooser.setInitialFileName(defaultName);
             //创建文件选择过滤器
@@ -210,5 +282,20 @@ public class Main extends Application implements IDbOperationCallback{
 			setScene(scene);
 			setTitle("请登录");
 		}
+	}
+	
+	private JSONObject processEcgData(List<Short> ecgData, int sampleRate, int caliValue) {
+		if(ecgData == null || ecgData.isEmpty()) {
+			return null;
+		}
+		QrsDetectorWithRPosition detector = new QrsDetectorWithRPosition(sampleRate, caliValue);
+		for(Short datum : ecgData) {
+			detector.outputRRInterval((int)datum);
+		}
+		System.out.println("" + detector.getQrsPositions().size());
+		JSONObject json = new JSONObject();
+		json.put("QrsPos", detector.getQrsPositions());
+		System.out.println(json);
+		return json;
 	}
 }

@@ -19,7 +19,7 @@ package qrsdetbyhamilton;
  * @since JDK 1.6
  */
 public class QrsDetector {
-	private static final double TH = 0.3125;
+	private static final double TH = 0.475;
 	
 	private final int sampleRate;		// 采样频率
 	private final int value1mV;			// 1mV量化值
@@ -76,19 +76,19 @@ public class QrsDetector {
 		this.sampleRate = sampleRate;
 		this.value1mV = value1mV;
 		
-		double MS_PER_SAMPLE =	( (double) 1000/ (double) sampleRate);
+		double MS_PER_SAMPLE =	1000.0/sampleRate;
 
-		MS95 =	((int) (95/MS_PER_SAMPLE + 0.5));
-		MS150 =	((int) (150/MS_PER_SAMPLE + 0.5));
-		MS220 =	((int) (220/MS_PER_SAMPLE + 0.5));
-		MS360 = ((int) (360/MS_PER_SAMPLE + 0.5));
+		MS95 =	(int)Math.round(95.0/MS_PER_SAMPLE);//((int) (95/MS_PER_SAMPLE + 0.5));
+		MS150 =	(int)Math.round(150.0/MS_PER_SAMPLE);//((int) (150/MS_PER_SAMPLE + 0.5));
+		MS220 =	(int)Math.round(220.0/MS_PER_SAMPLE);//((int) (220/MS_PER_SAMPLE + 0.5));
+		MS360 = (int)Math.round(360.0/MS_PER_SAMPLE);//((int) (360/MS_PER_SAMPLE + 0.5));
 		MS1000 = sampleRate;		
-		MS1500 = ((int) (1500/MS_PER_SAMPLE));
+		MS1500 = (int)Math.round(1500.0/MS_PER_SAMPLE);// ((int) (1500/MS_PER_SAMPLE));
 		
-		int MS195 =	((int) (195/MS_PER_SAMPLE + 0.5));
+		int MS195 =	(int)Math.round(195.0/MS_PER_SAMPLE);//((int) (195/MS_PER_SAMPLE + 0.5));
 		PRE_BLANK = MS195;
 		
-		MIN_PEAK_AMP = value1mV*7/200;
+		MIN_PEAK_AMP = 3;//value1mV*7/200;
 		
 		filter = new QrsFilter(sampleRate);
 		derivative = new Derivative(sampleRate);
@@ -96,7 +96,7 @@ public class QrsDetector {
 		FILTER_DELAY = filter.getFilterDelay();
 		WINDOW_WIDTH = filter.getWindowWidth();
 		
-		int MS100 =	((int) (100/MS_PER_SAMPLE + 0.5));
+		int MS100 =	(int)Math.round(100.0/MS_PER_SAMPLE);//((int) (100/MS_PER_SAMPLE + 0.5));
 		DER_DELAY = WINDOW_WIDTH + FILTER_DELAY + MS100;
 		
 		DDBuffer = new int[DER_DELAY];
@@ -296,7 +296,8 @@ public class QrsDetector {
 				pushToHead(rrbuf, sbloc);
 				rrmean = mean(rrbuf) ;
 				sbcount = rrmean + (rrmean >> 1) + WINDOW_WIDTH ;
-				QrsDelay = count = count - sbloc ;
+				count -= sbloc;
+				QrsDelay = count ;
 				QrsDelay += FILTER_DELAY ;
 				sbpeak = 0 ;
 				lastmax = maxder[0] ;
