@@ -3,12 +3,12 @@ package qrsdetbyhamilton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QrsDetectorWithRPosition extends QrsDetector {
+public class QrsDetectorWithQRSInfo extends QrsDetector {
 	private List<Long> qrsPositions = new ArrayList<>();
 	private List<Integer> rrIntervals = new ArrayList<>();
 	
-	public QrsDetectorWithRPosition(int sampleRate, int value1mV) {
-		super(sampleRate, value1mV);
+	public QrsDetectorWithQRSInfo(int sampleRate) {
+		super(sampleRate);
 		// TODO Auto-generated constructor stub
 	}
 

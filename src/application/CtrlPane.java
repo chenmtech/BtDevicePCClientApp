@@ -1,8 +1,5 @@
 package application;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Calendar;
@@ -20,7 +17,6 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
 
 public class CtrlPane extends HBox{
 	

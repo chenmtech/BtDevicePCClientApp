@@ -31,7 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import qrsdetbyhamilton.QrsDetectorWithRPosition;
+import qrsdetbyhamilton.QrsDetectorWithQRSInfo;
 
 
 public class Main extends Application implements IDbOperationCallback{
@@ -161,12 +161,11 @@ public class Main extends Application implements IDbOperationCallback{
                 	ecgData.add(Short.parseShort(str));
                 }
                 int sampleRate = json.getInt("sampleRate");
-                int caliValue = json.getInt("caliValue");
                 final JSONObject[] jsonArr = new JSONObject[1];
                 Thread thProcess = new Thread(new Runnable() {
         			@Override
         			public void run() {
-        				jsonArr[0] = processEcgData(ecgData, sampleRate, caliValue);
+        				jsonArr[0] = processEcgData(ecgData, sampleRate);
         			}			
         		});
         		thProcess.start();
@@ -288,11 +287,11 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
-	private JSONObject processEcgData(List<Short> ecgData, int sampleRate, int caliValue) {
+	private JSONObject processEcgData(List<Short> ecgData, int sampleRate) {
 		if(ecgData == null || ecgData.isEmpty()) {
 			return null;
 		}
-		QrsDetectorWithRPosition detector = new QrsDetectorWithRPosition(sampleRate, caliValue);
+		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
 		for(Short datum : ecgData) {
 			detector.outputRRInterval((int)datum);
 		}

@@ -22,7 +22,6 @@ public class QrsDetector {
 	private static final double TH = 0.475;
 	
 	private final int sampleRate;		// 采样频率
-	private final int value1mV;			// 1mV量化值
 	private final int PRE_BLANK;
 	private final int MIN_PEAK_AMP;
 	
@@ -72,9 +71,8 @@ public class QrsDetector {
 	int RRCount = 0;
 	boolean firstPeak = true; // does the first peak occur
 	
-	public QrsDetector(int sampleRate, int value1mV) {
+	public QrsDetector(int sampleRate) {
 		this.sampleRate = sampleRate;
-		this.value1mV = value1mV;
 		
 		double MS_PER_SAMPLE =	1000.0/sampleRate;
 
