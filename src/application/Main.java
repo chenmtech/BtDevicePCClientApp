@@ -171,11 +171,15 @@ public class Main extends Application implements IDbOperationCallback{
         		});
         		thProcess.start();
         		String srcFileName = file.getAbsolutePath();
-        		String tgtFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.')) + "-review.json";
-        		File out = new File(tgtFileName);
-        		try(PrintWriter write = new PrintWriter(out)) {
+        		String tmpFile = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
+        		String tgtJsonFileName = tmpFile + "-review.json";
+        		String tgtTxtFileName = tmpFile + ".txt";
+        		File outJson = new File(tgtJsonFileName);
+        		File outTxt = new File(tgtTxtFileName);
+        		try(PrintWriter jsonWriter = new PrintWriter(outJson); PrintWriter txtWriter = new PrintWriter(outTxt)) {
         			thProcess.join();
-        			write.print(jsonArr[0].toString());
+        			jsonWriter.print(jsonArr[0].toString());
+        			outputEcgDataToTXTFile(txtWriter, ecgData, jsonArr[0]);
         			infoPane.setInfo("已将处理结果保存到文件中。");
         		} catch (InterruptedException e) {
         			infoPane.setInfo("处理被中断。");
@@ -292,10 +296,41 @@ public class Main extends Application implements IDbOperationCallback{
 		for(Short datum : ecgData) {
 			detector.outputRRInterval((int)datum);
 		}
-		System.out.println("" + detector.getQrsPositions().size());
+		List<Long> qrsPos = detector.getQrsPositions();
+		List<Integer> rrInterval = detector.getRrIntervals();
+		List<Long> beatBegin = new ArrayList<>();
+		for(int i = 0; i < rrInterval.size(); i++) {
+			beatBegin.add(qrsPos.get(i+1) - Math.round(rrInterval.get(i)*2.0/5));
+		}
 		JSONObject json = new JSONObject();
-		json.put("QrsPos", detector.getQrsPositions());
+		json.put("QrsPos", qrsPos);
+		json.put("BeatBegin", beatBegin);
 		System.out.println(json);
 		return json;
+	}
+	
+	private void outputEcgDataToTXTFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
+		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
+		for(int i = 0; i < beatBegin.length()-1; i++) {
+			int length = (int)(beatBegin.getLong(i+1) - beatBegin.getLong(i));
+			long toPos = beatBegin.getLong(i+1);
+			int fill = 0;
+			if(length > 250) {
+				toPos = beatBegin.getLong(i) + 250;
+			} else if(length < 250) {
+				fill = 250-length;
+			}
+			long pos;
+			for(pos = beatBegin.getLong(i); pos <toPos; pos++) {
+				writer.print(ecgData.get((int)pos));
+				writer.print(' ');
+			}
+			int lastNum = ecgData.get((int)(pos-1));
+			for(int j = 0; j < fill; j++) {
+				writer.print(lastNum);
+				writer.print(' ');
+			}
+			writer.print("\r\n");
+		}
 	}
 }
