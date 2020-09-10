@@ -165,10 +165,17 @@ public class Main extends Application implements IDbOperationCallback{
                 Thread thProcess = new Thread(new Runnable() {
         			@Override
         			public void run() {
-        				jsonArr[0] = processEcgData(ecgData, sampleRate);
+        				jsonArr[0] = getEcgQrsAndBeatBeginPos(ecgData, sampleRate);
         			}			
         		});
         		thProcess.start();
+    			try {
+					thProcess.join();
+				} catch (InterruptedException e1) {
+        			infoPane.setInfo("处理被中断。");
+					e1.printStackTrace();
+					return;
+				}
         		String srcFileName = file.getAbsolutePath();
         		String tmpFile = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
         		String tgtJsonFileName = tmpFile + "-review.json";
@@ -176,13 +183,14 @@ public class Main extends Application implements IDbOperationCallback{
         		File outJson = new File(tgtJsonFileName);
         		File outTxt = new File(tgtTxtFileName);
         		try(PrintWriter jsonWriter = new PrintWriter(outJson); PrintWriter txtWriter = new PrintWriter(outTxt)) {
-        			thProcess.join();
         			jsonWriter.print(jsonArr[0].toString());
-        			outputEcgDataToTXTFile(txtWriter, ecgData, jsonArr[0]);
+        			
+        			//outputShortEcgDataToTXTFile(txtWriter, ecgData, jsonArr[0]);
+        			
+        			List<Float> out = normalizeEcgData(ecgData, jsonArr[0]);
+        			outputFloatEcgDataToTXTFile(txtWriter, out, jsonArr[0]);
+        			
         			infoPane.setInfo("已将处理结果保存到文件中。");
-        		} catch (InterruptedException e) {
-        			infoPane.setInfo("处理被中断。");
-        			e.printStackTrace();
         		}
         	} catch (IOException e) {
         		infoPane.setInfo("处理信号失败");
@@ -287,7 +295,7 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
-	private JSONObject processEcgData(List<Short> ecgData, int sampleRate) {
+	private JSONObject getEcgQrsAndBeatBeginPos(List<Short> ecgData, int sampleRate) {
 		if(ecgData == null || ecgData.isEmpty()) {
 			return null;
 		}
@@ -308,7 +316,67 @@ public class Main extends Application implements IDbOperationCallback{
 		return json;
 	}
 	
-	private void outputEcgDataToTXTFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
+	private List<Float> normalizeEcgData(List<Short> ecgData, JSONObject json) {
+		List<Float> out = new ArrayList<>();
+		
+		for(Short d : ecgData) {
+			out.add((float)d);
+		}
+		
+		List<Float> oneBeat =  new ArrayList<>();
+		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
+		for(int i = 0; i < beatBegin.length()-1; i++) {
+			for(long begin = beatBegin.getLong(i); begin < beatBegin.getLong(i+1); begin++) {
+				oneBeat.add(out.get((int)begin));
+			}
+			System.out.println(oneBeat);
+			
+			float ave = average(oneBeat);
+			float std = standardDiviation(oneBeat);
+			
+			for(int ii = 0; ii < oneBeat.size(); ii++) {
+				oneBeat.set(ii, (oneBeat.get(ii)-ave)/std);
+			}
+			
+			System.out.println("" + ave + " " + std);
+			System.out.println(oneBeat);
+			
+			for(long begin = beatBegin.getLong(i),  ii = 0; begin < beatBegin.getLong(i+1); begin++, ii++) {
+				out.set((int)begin, oneBeat.get((int)ii));
+			}
+			
+			oneBeat.clear();
+		}
+		return out;
+	}
+	
+	 //均值
+	 public static float average(List<Float> x) { 
+		  int m=x.size();
+		  float sum=0;
+		  for(int i=0;i<m;i++){//求和
+			  sum+=x.get(i);
+		  }
+		 return sum/m; 
+	 }
+	
+	 //标准差σ=sqrt(s^2)
+	 public static float standardDiviation(List<Float> x) { 
+		  int m=x.size();
+		  float sum=0;
+		  for(int i=0;i<m;i++){//求和
+			  sum+=x.get(i);
+		  }
+		  double dAve=sum/m;//求平均值
+		  double dVar=0;
+		  for(int i=0;i<m;i++){
+		      dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
+		  }
+	   //reture Math.sqrt(dVar/(m-1));
+		return (float)Math.sqrt(dVar/(m-1));    
+	 }
+	
+	private void outputShortEcgDataToTXTFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
 		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
 		for(int i = 0; i < beatBegin.length()-1; i++) {
 			int length = (int)(beatBegin.getLong(i+1) - beatBegin.getLong(i));
@@ -327,6 +395,31 @@ public class Main extends Application implements IDbOperationCallback{
 			int lastNum = ecgData.get((int)(pos-1));
 			for(int j = 0; j < fill; j++) {
 				writer.print(lastNum);
+				writer.print(' ');
+			}
+			writer.print("\r\n");
+		}
+	}
+	
+	private void outputFloatEcgDataToTXTFile(PrintWriter writer, List<Float> ecgData, JSONObject json) {
+		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
+		for(int i = 0; i < beatBegin.length()-1; i++) {
+			int length = (int)(beatBegin.getLong(i+1) - beatBegin.getLong(i));
+			long toPos = beatBegin.getLong(i+1);
+			int fill = 0;
+			if(length > 250) {
+				toPos = beatBegin.getLong(i) + 250;
+			} else if(length < 250) {
+				fill = 250-length;
+			}
+			long pos;
+			for(pos = beatBegin.getLong(i); pos <toPos; pos++) {
+				writer.printf("%.3f", ecgData.get((int)pos));
+				writer.print(' ');
+			}
+			float lastNum = ecgData.get((int)(pos-1));
+			for(int j = 0; j < fill; j++) {
+				writer.printf("%.3f", lastNum);
 				writer.print(' ');
 			}
 			writer.print("\r\n");
