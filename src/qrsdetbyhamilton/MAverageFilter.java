@@ -9,7 +9,7 @@ public class MAverageFilter {
 
 	public MAverageFilter(int SAMPLE_RATE) {
 		double MS_PER_SAMPLE =  1000.0/SAMPLE_RATE;
-		int MS80	= (int)Math.round(100.0/MS_PER_SAMPLE);// ((int) (80/MS_PER_SAMPLE + 0.5));
+		int MS80	= (int)Math.round(120.0/MS_PER_SAMPLE);// ((int) (80/MS_PER_SAMPLE + 0.5));
 		
 		WINDOW_WIDTH = MS80;
 		data = new int[WINDOW_WIDTH];

@@ -7,12 +7,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import dsp.filter.FIRFilter;
+import dsp.filter.design.FIRDesigner;
+import dsp.filter.design.FilterType;
+import dsp.filter.design.WinType;
+import dsp.filter.structure.StructType;
+import dsp.seq.RealSeq;
 import com.cmtech.web.btdevice.RecordType;
 
 import javafx.application.Application;
@@ -162,10 +169,42 @@ public class Main extends Application implements IDbOperationCallback{
                 }
                 int sampleRate = json.getInt("sampleRate");
                 final JSONObject[] jsonArr = new JSONObject[1];
+                final int K = 8;
+                final int M = 25;
+                final int L = 36;
+                final int N = K*L*2-1;
+                final int delay = (N-1)/2;
+                
                 Thread thProcess = new Thread(new Runnable() {
         			@Override
         			public void run() {
-        				jsonArr[0] = getEcgQrsAndBeatBeginPos(ecgData, sampleRate);
+        				
+        				double[] wc = {Math.PI/L};
+        			    WinType wType = WinType.HAMMING;
+        			    FilterType fType = FilterType.LOWPASS;
+        				RealSeq h = FIRDesigner.FIRUsingWindow(N, wc, wType, fType);
+        				//h = (RealSeq) h.multiple((double) L);
+        				FIRFilter filter = new FIRFilter(h);
+        				filter.createStructure(StructType.FIR_LPF);
+        				List<Float> out = new ArrayList<>();
+        				for(Short d : ecgData) {
+        					out.add((float)filter.filter((double)d));
+        					for(int i = 0; i < L-1; i++) {
+        						out.add((float)filter.filter(0.0));
+        					}
+        				}
+        				List<Short> out1 = new ArrayList<>();
+        				for(int i = delay; i < out.size(); i+=M) {
+        					out1.add((short)Math.round(L*out.get(i)));
+        				}
+
+        				System.out.println(ecgData.size());
+        				System.out.println(out1.size());
+        				
+        				ecgData.clear();
+        				ecgData.addAll(out1);
+
+        				jsonArr[0] = getEcgQrsAndBeatBeginPos(ecgData, sampleRate*L/M);
         			}			
         		});
         		thProcess.start();
@@ -178,11 +217,15 @@ public class Main extends Application implements IDbOperationCallback{
 				}
         		String srcFileName = file.getAbsolutePath();
         		String tmpFile = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
+        		String resampleJsonFileName = tmpFile + "-resample.json";
         		String tgtJsonFileName = tmpFile + "-review.json";
         		String tgtTxtFileName = tmpFile + ".txt";
+        		File resampleJson = new File(resampleJsonFileName);
         		File outJson = new File(tgtJsonFileName);
         		File outTxt = new File(tgtTxtFileName);
-        		try(PrintWriter jsonWriter = new PrintWriter(outJson); PrintWriter txtWriter = new PrintWriter(outTxt)) {
+        		try(PrintWriter resJsonWriter = new PrintWriter(resampleJson); PrintWriter jsonWriter = new PrintWriter(outJson); PrintWriter txtWriter = new PrintWriter(outTxt)) {
+        			resJsonWriter.print(ecgData.toString());
+        			
         			jsonWriter.print(jsonArr[0].toString());
         			
         			//outputShortEcgDataToTXTFile(txtWriter, ecgData, jsonArr[0]);
@@ -329,7 +372,7 @@ public class Main extends Application implements IDbOperationCallback{
 			for(long begin = beatBegin.getLong(i); begin < beatBegin.getLong(i+1); begin++) {
 				oneBeat.add(out.get((int)begin));
 			}
-			System.out.println(oneBeat);
+			//System.out.println(oneBeat);
 			
 			float ave = average(oneBeat);
 			float std = standardDiviation(oneBeat);
@@ -338,8 +381,8 @@ public class Main extends Application implements IDbOperationCallback{
 				oneBeat.set(ii, (oneBeat.get(ii)-ave)/std);
 			}
 			
-			System.out.println("" + ave + " " + std);
-			System.out.println(oneBeat);
+			//System.out.println("" + ave + " " + std);
+			//System.out.println(oneBeat);
 			
 			for(long begin = beatBegin.getLong(i),  ii = 0; begin < beatBegin.getLong(i+1); begin++, ii++) {
 				out.set((int)begin, oneBeat.get((int)ii));
@@ -379,16 +422,19 @@ public class Main extends Application implements IDbOperationCallback{
 	private void outputShortEcgDataToTXTFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
 		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
 		for(int i = 0; i < beatBegin.length()-1; i++) {
-			int length = (int)(beatBegin.getLong(i+1) - beatBegin.getLong(i));
-			long toPos = beatBegin.getLong(i+1);
+			long begin = beatBegin.getLong(i);
+			long end = beatBegin.getLong(i+1);
+			int length = (int)(end - begin);
+			
 			int fill = 0;
 			if(length > 250) {
-				toPos = beatBegin.getLong(i) + 250;
+				begin += (length-250)/2;
+				end = begin + 250;
 			} else if(length < 250) {
 				fill = 250-length;
 			}
 			long pos;
-			for(pos = beatBegin.getLong(i); pos <toPos; pos++) {
+			for(pos = begin; pos <end; pos++) {
 				writer.print(ecgData.get((int)pos));
 				writer.print(' ');
 			}
@@ -404,16 +450,19 @@ public class Main extends Application implements IDbOperationCallback{
 	private void outputFloatEcgDataToTXTFile(PrintWriter writer, List<Float> ecgData, JSONObject json) {
 		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
 		for(int i = 0; i < beatBegin.length()-1; i++) {
-			int length = (int)(beatBegin.getLong(i+1) - beatBegin.getLong(i));
-			long toPos = beatBegin.getLong(i+1);
+			long begin = beatBegin.getLong(i);
+			long end = beatBegin.getLong(i+1);
+			int length = (int)(end - begin);
+			
 			int fill = 0;
 			if(length > 250) {
-				toPos = beatBegin.getLong(i) + 250;
+				begin += (length-250)/2;
+				end = begin + 250;
 			} else if(length < 250) {
 				fill = 250-length;
 			}
 			long pos;
-			for(pos = beatBegin.getLong(i); pos <toPos; pos++) {
+			for(pos = begin; pos <end; pos++) {
 				writer.printf("%.3f", ecgData.get((int)pos));
 				writer.print(' ');
 			}
