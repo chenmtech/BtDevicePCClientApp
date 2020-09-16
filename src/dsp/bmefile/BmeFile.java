@@ -1,11 +1,3 @@
-/**
- * Project Name:DSP_JAVA
- * File Name:BmeFile.java
- * Package Name:com.cmtech.dsp.bmefile
- * Date:2018年2月11日上午6:23:50
- * Copyright (c) 2018, e_yujunquan@163.com All Rights Reserved.
- *
- */
 package dsp.bmefile;
 
 import java.io.BufferedInputStream;

@@ -63,7 +63,7 @@ public class RecordPane extends GridPane {
 		String ver = json.getString("ver");
 		String creatorPlat = json.getString("creatorPlat");
 		String creatorId = json.getString("creatorId");
-		String creator = creatorPlat+creatorId;
+		String creator = creatorPlat + creatorId.substring(0, creatorId.length()-6) + "******";
 		long createTime = json.getLong("createTime");
 		String devAddress = json.getString("devAddress");
 		String note = json.getString("note");

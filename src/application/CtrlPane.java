@@ -48,7 +48,7 @@ public class CtrlPane extends HBox{
 		Button btnLogin = new Button("登录");
 		Button btnReload = new Button("开始查询");
 		Button btnLoadNext = new Button("继续查询");
-		Button btnProcessSignal = new Button("处理信号");
+		Button btnProcessSignal = new Button("ECG信号处理");
 		getChildren().addAll(btnLogin, btnReload, btnLoadNext, btnProcessSignal);
 		
 		btnLogin.setOnAction(new EventHandler<ActionEvent>() {

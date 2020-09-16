@@ -7,21 +7,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import dsp.filter.FIRFilter;
-import dsp.filter.design.FIRDesigner;
-import dsp.filter.design.FilterType;
-import dsp.filter.design.WinType;
-import dsp.filter.structure.StructType;
-import dsp.seq.RealSeq;
 import com.cmtech.web.btdevice.RecordType;
 
+import ecgprocess.EcgProcessor;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -38,16 +32,16 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import qrsdetbyhamilton.QrsDetectorWithQRSInfo;
+import util.FileDialogUtil;
 
 
 public class Main extends Application implements IDbOperationCallback{
-	private static final String TITLE = "欢迎使用康明智联PC客户端";
-	private static final String DEFAULT_JSON_FILE_DIR = "F:\\360云盘\\360同步文件夹\\科研\\data\\jsonfile";
+	private static final String VER = "0.1";
+	private static final String TITLE = "欢迎使用康明智联PC客户端App Ver:" + VER;
 	public static final Account ACCOUNT = new Account();
 	private Stage primaryStage;
-	private final InfoPane infoPane = new InfoPane();;
-	private final RecordPane recordPane = new RecordPane(this);;
+	private final InfoPane infoPane = new InfoPane();
+	private final RecordPane recordPane = new RecordPane(this);
 	private DbOperator dbOperator;
 	private long fromTime = new Date().getTime();
 	
@@ -135,30 +129,23 @@ public class Main extends Application implements IDbOperationCallback{
 			//login();
 			//return;
 		}
-		
-		FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("选择需处理的信号JSON文件");
-        //设置将当前目录作为初始显示目录
-        fileChooser.setInitialDirectory(new File(DEFAULT_JSON_FILE_DIR));
-        //创建文件选择过滤器
-        FileChooser.ExtensionFilter filter =
-                new FileChooser.ExtensionFilter("JSON文件","*.json");
-        //设置文件过滤器
-        fileChooser.getExtensionFilters().add(filter);
-        File file = fileChooser.showOpenDialog(primaryStage);
+
+        FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+        File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
+        
         if(file != null){
         	try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
         		String tempString = null;
-                StringBuilder jsonStrBuilder = new StringBuilder();
+                StringBuilder builder = new StringBuilder();
                 // 一次读入一行，直到读入null为文件结束
                 while ((tempString = reader.readLine()) != null) {
-                    jsonStrBuilder.append(tempString);
+                    builder.append(tempString);
                 }
-                JSONObject json = new JSONObject(jsonStrBuilder.toString());
+                JSONObject json = new JSONObject(builder.toString());
                 System.out.println(json.toString());
                 RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
                 if(type != RecordType.ECG) {
-                	infoPane.setInfo("暂时无法处理该类型信号。");
+                	infoPane.setInfo("只能处理心电信号。");
                 	return;
                 }
                 String ecgStr = json.getString("ecgData");
@@ -168,70 +155,22 @@ public class Main extends Application implements IDbOperationCallback{
                 	ecgData.add(Short.parseShort(str));
                 }
                 int sampleRate = json.getInt("sampleRate");
-                final JSONObject[] jsonArr = new JSONObject[1];
-                final int K = 8;
-                final int M = 25;
-                final int L = 36;
-                final int N = K*L*2-1;
-                final int delay = (N-1)/2;
                 
-                Thread thProcess = new Thread(new Runnable() {
-        			@Override
-        			public void run() {
-        				
-        				double[] wc = {Math.PI/L};
-        			    WinType wType = WinType.HAMMING;
-        			    FilterType fType = FilterType.LOWPASS;
-        				RealSeq h = FIRDesigner.FIRUsingWindow(N, wc, wType, fType);
-        				//h = (RealSeq) h.multiple((double) L);
-        				FIRFilter filter = new FIRFilter(h);
-        				filter.createStructure(StructType.FIR_LPF);
-        				List<Float> out = new ArrayList<>();
-        				for(Short d : ecgData) {
-        					out.add((float)filter.filter((double)d));
-        					for(int i = 0; i < L-1; i++) {
-        						out.add((float)filter.filter(0.0));
-        					}
-        				}
-        				List<Short> out1 = new ArrayList<>();
-        				for(int i = delay; i < out.size(); i+=M) {
-        					out1.add((short)Math.round(L*out.get(i)));
-        				}
-
-        				System.out.println(ecgData.size());
-        				System.out.println(out1.size());
-        				
-        				ecgData.clear();
-        				ecgData.addAll(out1);
-
-        				jsonArr[0] = getEcgQrsAndBeatBeginPos(ecgData, sampleRate*L/M);
-        			}			
-        		});
-        		thProcess.start();
-    			try {
-					thProcess.join();
-				} catch (InterruptedException e1) {
-        			infoPane.setInfo("处理被中断。");
-					e1.printStackTrace();
-					return;
-				}
+                EcgProcessor ecgProc = new EcgProcessor();
+                ecgProc.process(ecgData, sampleRate);
+    			
         		String srcFileName = file.getAbsolutePath();
-        		String tmpFile = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
-        		String resampleJsonFileName = tmpFile + "-resample.json";
-        		String tgtJsonFileName = tmpFile + "-review.json";
-        		String tgtTxtFileName = tmpFile + ".txt";
-        		File resampleJson = new File(resampleJsonFileName);
-        		File outJson = new File(tgtJsonFileName);
-        		File outTxt = new File(tgtTxtFileName);
-        		try(PrintWriter resJsonWriter = new PrintWriter(resampleJson); PrintWriter jsonWriter = new PrintWriter(outJson); PrintWriter txtWriter = new PrintWriter(outTxt)) {
-        			resJsonWriter.print(ecgData.toString());
-        			
-        			jsonWriter.print(jsonArr[0].toString());
-        			
-        			//outputShortEcgDataToTXTFile(txtWriter, ecgData, jsonArr[0]);
-        			
-        			List<Float> out = normalizeEcgData(ecgData, jsonArr[0]);
-        			outputFloatEcgDataToTXTFile(txtWriter, out, jsonArr[0]);
+        		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
+        		String resampleJsonFileName = tmpFileName + "-resample.json";
+        		String reviewJsonFileName = tmpFileName + "-review.json";
+        		String txtFileName = tmpFileName + ".txt";
+        		File resampleFile = new File(resampleJsonFileName);
+        		File reviewFile = new File(reviewJsonFileName);
+        		File txtFile = new File(txtFileName);
+        		try(PrintWriter resampleWriter = new PrintWriter(resampleFile); PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
+        			resampleWriter.print(ecgProc.getEcgData().toString());
+        			reviewWriter.print(ecgProc.getQrsAndBeatPos().toString());
+        			outputEcgDataToTxtFile(txtWriter, ecgProc.getNormalizedEcgData(), ecgProc.getBeatBeginPos());
         			
         			infoPane.setInfo("已将处理结果保存到文件中。");
         		}
@@ -240,6 +179,33 @@ public class Main extends Application implements IDbOperationCallback{
 				e.printStackTrace();
 			}
         }
+	}
+	
+	private <T> void outputEcgDataToTxtFile(PrintWriter writer, List<T> ecgData, JSONArray beatBegin) {
+		for(int i = 0; i < beatBegin.length()-1; i++) {
+			long begin = beatBegin.getLong(i);
+			long end = beatBegin.getLong(i+1);
+			int length = (int)(end - begin);
+			
+			int fill = 0;
+			if(length > 250) {
+				begin += (length-250)/2;
+				end = begin + 250;
+			} else if(length < 250) {
+				fill = 250-length;
+			}
+			long pos;
+			for(pos = begin; pos <end; pos++) {
+				writer.printf("%.3f", (float)ecgData.get((int)pos));
+				writer.print(' ');
+			}
+			T lastNum = ecgData.get((int)(pos-1));
+			for(int j = 0; j < fill; j++) {
+				writer.printf("%.3f", (float)lastNum);
+				writer.print(' ');
+			}
+			writer.print("\r\n");
+		}
 	}
 	
 	@Override
@@ -276,18 +242,9 @@ public class Main extends Application implements IDbOperationCallback{
 		if(json == null) {
 			infoPane.setInfo("下载记录失败");
 		} else {
-			FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("文件保存对话框");
-            //设置将当前目录作为初始显示目录
-            fileChooser.setInitialDirectory(new File(DEFAULT_JSON_FILE_DIR));
-            String defaultName = createJsonFileName(RecordType.getName(json.getInt("recordTypeCode")), json.getLong("createTime") , json.getString("devAddress"));
-            fileChooser.setInitialFileName(defaultName);
-            //创建文件选择过滤器
-            FileChooser.ExtensionFilter filter =
-                    new FileChooser.ExtensionFilter("JSON文件","*.json");
-            //设置文件过滤器
-            fileChooser.getExtensionFilters().add(filter);
-            File file = fileChooser.showSaveDialog(primaryStage);
+			String defaultName = createJsonFileName(RecordType.getName(json.getInt("recordTypeCode")), json.getLong("createTime") , json.getString("devAddress"));
+            FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+            File file = FileDialogUtil.openFileDialog(primaryStage, false, null, defaultName, filter);
             if(file != null){
             	try(PrintWriter writer = new PrintWriter(file)) {
             		writer.print(json.toString()); 
@@ -338,88 +295,7 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
-	private JSONObject getEcgQrsAndBeatBeginPos(List<Short> ecgData, int sampleRate) {
-		if(ecgData == null || ecgData.isEmpty()) {
-			return null;
-		}
-		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
-		for(Short datum : ecgData) {
-			detector.outputRRInterval((int)datum);
-		}
-		List<Long> qrsPos = detector.getQrsPositions();
-		List<Integer> rrInterval = detector.getRrIntervals();
-		List<Long> beatBegin = new ArrayList<>();
-		for(int i = 0; i < rrInterval.size(); i++) {
-			beatBegin.add(qrsPos.get(i+1) - Math.round(rrInterval.get(i)*2.0/5));
-		}
-		JSONObject json = new JSONObject();
-		json.put("QrsPos", qrsPos);
-		json.put("BeatBegin", beatBegin);
-		System.out.println(json);
-		return json;
-	}
-	
-	private List<Float> normalizeEcgData(List<Short> ecgData, JSONObject json) {
-		List<Float> out = new ArrayList<>();
-		
-		for(Short d : ecgData) {
-			out.add((float)d);
-		}
-		
-		List<Float> oneBeat =  new ArrayList<>();
-		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
-		for(int i = 0; i < beatBegin.length()-1; i++) {
-			for(long begin = beatBegin.getLong(i); begin < beatBegin.getLong(i+1); begin++) {
-				oneBeat.add(out.get((int)begin));
-			}
-			//System.out.println(oneBeat);
-			
-			float ave = average(oneBeat);
-			float std = standardDiviation(oneBeat);
-			
-			for(int ii = 0; ii < oneBeat.size(); ii++) {
-				oneBeat.set(ii, (oneBeat.get(ii)-ave)/std);
-			}
-			
-			//System.out.println("" + ave + " " + std);
-			//System.out.println(oneBeat);
-			
-			for(long begin = beatBegin.getLong(i),  ii = 0; begin < beatBegin.getLong(i+1); begin++, ii++) {
-				out.set((int)begin, oneBeat.get((int)ii));
-			}
-			
-			oneBeat.clear();
-		}
-		return out;
-	}
-	
-	 //均值
-	 public static float average(List<Float> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		 return sum/m; 
-	 }
-	
-	 //标准差σ=sqrt(s^2)
-	 public static float standardDiviation(List<Float> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		  double dAve=sum/m;//求平均值
-		  double dVar=0;
-		  for(int i=0;i<m;i++){
-		      dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
-		  }
-	   //reture Math.sqrt(dVar/(m-1));
-		return (float)Math.sqrt(dVar/(m-1));    
-	 }
-	
-	private void outputShortEcgDataToTXTFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
+/*	private void outputEcgDataToTxtFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
 		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
 		for(int i = 0; i < beatBegin.length()-1; i++) {
 			long begin = beatBegin.getLong(i);
@@ -445,33 +321,5 @@ public class Main extends Application implements IDbOperationCallback{
 			}
 			writer.print("\r\n");
 		}
-	}
-	
-	private void outputFloatEcgDataToTXTFile(PrintWriter writer, List<Float> ecgData, JSONObject json) {
-		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
-		for(int i = 0; i < beatBegin.length()-1; i++) {
-			long begin = beatBegin.getLong(i);
-			long end = beatBegin.getLong(i+1);
-			int length = (int)(end - begin);
-			
-			int fill = 0;
-			if(length > 250) {
-				begin += (length-250)/2;
-				end = begin + 250;
-			} else if(length < 250) {
-				fill = 250-length;
-			}
-			long pos;
-			for(pos = begin; pos <end; pos++) {
-				writer.printf("%.3f", ecgData.get((int)pos));
-				writer.print(' ');
-			}
-			float lastNum = ecgData.get((int)(pos-1));
-			for(int j = 0; j < fill; j++) {
-				writer.printf("%.3f", lastNum);
-				writer.print(' ');
-			}
-			writer.print("\r\n");
-		}
-	}
+	}*/
 }
