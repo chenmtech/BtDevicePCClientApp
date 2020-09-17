@@ -73,15 +73,18 @@ public class EcgProcessor {
 		lpFilter = designLpFilter(sampleRate);
 		System.out.println(lpFilter);
 		
+		// do filtering
 		List<Short> afterFilter = new ArrayList<Short>();
 		for(Short d : ecgData) {
 			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(d))));
 		}		
 		ecgData = afterFilter;
 		
+		// do resampling
 		this.ecgData = resampler.resample(ecgData);
 		sampleRate = resampler.getOutSampleRate();
 		
+		// detect the QRS waves
 		qrsAndBeatPos = getEcgQrsAndBeatBeginPos(this.ecgData, sampleRate);
 
 		JSONArray beatBegin = (JSONArray)qrsAndBeatPos.get("BeatBegin");
@@ -161,7 +164,6 @@ public class EcgProcessor {
 		  for(int i=0;i<m;i++){
 		      dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
 		  }
-	   //reture Math.sqrt(dVar/(m-1));
 		return (float)Math.sqrt(dVar/(m-1));    
 	 }
 }
