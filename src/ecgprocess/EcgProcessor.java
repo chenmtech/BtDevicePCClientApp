@@ -6,19 +6,42 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+
+import dsp.filter.FIRFilter;
+import dsp.filter.IIRFilter;
+import dsp.filter.design.FIRDesigner;
+import dsp.filter.design.FilterType;
+import dsp.filter.design.NotchDesigner;
+import dsp.filter.design.WinType;
 import qrsdetbyhamilton.QrsDetectorWithQRSInfo;
 
 public class EcgProcessor {
-	private final ResampleFrom250To360 resampler;
+	private ResampleFrom250To360 resampler;
+	private FIRFilter lpFilter;
+	private IIRFilter notch50;
 	private List<Short> ecgData;
 	private List<Float> normalizedEcgData;
 	private JSONObject qrsAndBeatPos;
 	
 	public EcgProcessor() {
-		resampler = new ResampleFrom250To360();
 	}
 	
+	public FIRFilter designLpFilter(int sampleRate) {
+		double[] wp = {2*Math.PI*65/sampleRate};
+		double[] ws = {2*Math.PI*85/sampleRate};
+		double Rp = 1;
+		double As = 50;
+		FilterType fType = FilterType.LOWPASS;
+		WinType wType = WinType.HAMMING;
+		
+		FIRFilter filter = FIRDesigner.design(wp, ws, Rp, As, fType, wType);
+		return filter;
+	}
 	
+	public IIRFilter designNotch(int f0, int sampleRate) {
+		IIRFilter filter = NotchDesigner.design(f0, 2, sampleRate);
+		return filter;
+	}
 	
 	public List<Short> getEcgData() {
 		return ecgData;
@@ -45,9 +68,21 @@ public class EcgProcessor {
 			return;
 		}
 		
-		this.ecgData = resampler.resample(ecgData);
+		resampler = new ResampleFrom250To360();
+		notch50 = designNotch(50, sampleRate);
+		lpFilter = designLpFilter(sampleRate);
+		System.out.println(lpFilter);
 		
-		qrsAndBeatPos = getEcgQrsAndBeatBeginPos(this.ecgData, resampler.getOutSampleRate());
+		List<Short> afterFilter = new ArrayList<Short>();
+		for(Short d : ecgData) {
+			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(d))));
+		}		
+		ecgData = afterFilter;
+		
+		this.ecgData = resampler.resample(ecgData);
+		sampleRate = resampler.getOutSampleRate();
+		
+		qrsAndBeatPos = getEcgQrsAndBeatBeginPos(this.ecgData, sampleRate);
 
 		JSONArray beatBegin = (JSONArray)qrsAndBeatPos.get("BeatBegin");
 		normalizedEcgData = normalizeEcgData(this.ecgData, beatBegin);

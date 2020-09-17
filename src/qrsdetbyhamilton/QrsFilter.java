@@ -78,10 +78,9 @@ public class QrsFilter {
 	}
 	
 	public int getFilterDelay() {
-		double MS_PER_SAMPLE =	1000.0/sampleRate;
-		int MS195 =	((int) (195/MS_PER_SAMPLE + 0.5));
-		int PRE_BLANK = MS195;
-		double delay = PRE_BLANK;
+		int ms195 = MsToSample.get(195,  sampleRate);
+		int preBlank = ms195;
+		double delay = preBlank;
 		delay += (derivative.getDelay()+lpFilter.getDelay()+hpFilter.getDelay());
 		return (int)delay;
 	}

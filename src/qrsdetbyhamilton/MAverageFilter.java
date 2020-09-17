@@ -1,29 +1,28 @@
 package qrsdetbyhamilton;
 
 public class MAverageFilter {
-	private final int WINDOW_WIDTH;
+	private final int windowWidth;
 	private final int[] data;
 	
 	private long sum = 0 ;
 	private int ptr = 0 ;
 
-	public MAverageFilter(int SAMPLE_RATE) {
-		double MS_PER_SAMPLE =  1000.0/SAMPLE_RATE;
-		int MS80	= (int)Math.round(120.0/MS_PER_SAMPLE);// ((int) (80/MS_PER_SAMPLE + 0.5));
-		
-		WINDOW_WIDTH = MS80;
-		data = new int[WINDOW_WIDTH];
+	public MAverageFilter(int sampleRate) {
+		int MS80 = MsToSample.get(80, sampleRate);
+		int MS120 = MsToSample.get(120, sampleRate);
+		windowWidth = MS120;
+		data = new int[windowWidth];
 		
 		initialize();
 	
 	}
 	
 	public int getLength() {
-		return WINDOW_WIDTH;
+		return windowWidth;
 	}
 	
 	public void initialize() {
-		for(ptr = 0; ptr < WINDOW_WIDTH ; ++ptr)
+		for(ptr = 0; ptr < windowWidth ; ++ptr)
 			data[ptr] = 0 ;
 		sum = 0 ;
 		ptr = 0 ;
@@ -43,13 +42,13 @@ public class MAverageFilter {
 		sum += datum ;
 		sum -= data[ptr] ;
 		data[ptr] = datum ;
-		if(++ptr == WINDOW_WIDTH)
+		if(++ptr == windowWidth)
 			ptr = 0 ;
 		
-		if((sum / WINDOW_WIDTH) > 32000)
+		if((sum / windowWidth) > 32000)
 			output = 32000 ;
 		else
-			output = (int) (sum / WINDOW_WIDTH) ;
+			output = (int) (sum / windowWidth) ;
 		return(output) ;
 	}
 }

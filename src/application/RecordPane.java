@@ -85,7 +85,7 @@ public class RecordPane extends GridPane {
 		TextField tfCreator = new TextField(creator);
 		tfCreator.setEditable(false);
 		nodes.add(tfCreator);
-		DateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+		DateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		String dateStr = dateFmt.format(new Date(createTime)) + '\n' + createTime;
 		nodes.add(new Label(dateStr));
 		nodes.add(new Label(devAddress));
