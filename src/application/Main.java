@@ -169,7 +169,7 @@ public class Main extends Application implements IDbOperationCallback{
         		File txtFile = new File(txtFileName);
         		try(PrintWriter resampleWriter = new PrintWriter(resampleFile); PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
         			resampleWriter.print(ecgProc.getEcgData().toString());
-        			reviewWriter.print(ecgProc.getQrsAndBeatPos().toString());
+        			reviewWriter.print(ecgProc.getReviewJson().toString());
         			outputEcgDataToTxtFile(txtWriter, ecgProc.getNormalizedEcgData(), ecgProc.getBeatBeginPos());
         			
         			infoPane.setInfo("已将处理结果保存到文件中。");

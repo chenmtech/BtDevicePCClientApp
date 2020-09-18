@@ -21,7 +21,7 @@ public class EcgProcessor {
 	private IIRFilter notch50;
 	private List<Short> ecgData;
 	private List<Float> normalizedEcgData;
-	private JSONObject qrsAndBeatPos;
+	private JSONObject reviewJson;
 	
 	public EcgProcessor() {
 	}
@@ -53,14 +53,12 @@ public class EcgProcessor {
 		return normalizedEcgData;
 	}
 
-
-
-	public JSONObject getQrsAndBeatPos() {
-		return qrsAndBeatPos;
+	public JSONObject getReviewJson() {
+		return reviewJson;
 	}
 
 	public JSONArray getBeatBeginPos() {
-		return (JSONArray)getQrsAndBeatPos().get("BeatBegin");
+		return (JSONArray)getReviewJson().get("BeatBegin");
 	}
 
 	public void process(List<Short> ecgData, int sampleRate) {
@@ -84,11 +82,17 @@ public class EcgProcessor {
 		this.ecgData = resampler.resample(ecgData);
 		sampleRate = resampler.getOutSampleRate();
 		
-		// detect the QRS waves
-		qrsAndBeatPos = getEcgQrsAndBeatBeginPos(this.ecgData, sampleRate);
+		// detect the QRS waves and RR interval
+		JSONObject qrsAndRRInterval = getEcgQrsPosAndRRInterval(this.ecgData, sampleRate);
+		// detect the R wave position and the begin pos of each beat
+		JSONObject rPosAndBeatBegin = getRPosAndBeatBegin(this.ecgData, qrsAndRRInterval);
 
-		JSONArray beatBegin = (JSONArray)qrsAndBeatPos.get("BeatBegin");
+		JSONArray beatBegin = (JSONArray)rPosAndBeatBegin.get("BeatBegin");
 		normalizedEcgData = normalizeEcgData(this.ecgData, beatBegin);
+		
+		reviewJson = rPosAndBeatBegin;
+		reviewJson.put("QrsPos", qrsAndRRInterval.get("QrsPos"));
+		System.out.println(reviewJson.toString());
 	}
 
 	private JSONObject getEcgQrsAndBeatBeginPos(List<Short> ecgData, int sampleRate) {
@@ -107,6 +111,24 @@ public class EcgProcessor {
 		json.put("BeatBegin", beatBegin);
 		System.out.println(json);
 		return json;
+	}
+	
+	private JSONObject getEcgQrsPosAndRRInterval(List<Short> ecgData, int sampleRate) {
+		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
+		for(Short datum : ecgData) {
+			detector.outputRRInterval((int)datum);
+		}
+		List<Long> qrsPos = detector.getQrsPositions();
+		List<Integer> rrInterval = detector.getRrIntervals();
+		JSONObject json = new JSONObject();
+		json.put("QrsPos", qrsPos);
+		json.put("RRInterval", rrInterval);
+		System.out.println(json);
+		return json;
+	}
+	
+	public static JSONObject getRPosAndBeatBegin(List<Short> ecgData, JSONObject qrsAndRRInterval) {
+		return RWaveDetecter.findRPosAndBeatBegin(ecgData, qrsAndRRInterval);
 	}
 	
 	private List<Float> normalizeEcgData(List<Short> ecgData, JSONArray beatBegin) {
