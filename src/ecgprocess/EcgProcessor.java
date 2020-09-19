@@ -1,5 +1,6 @@
 package ecgprocess;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import dsp.filter.design.FilterType;
 import dsp.filter.design.NotchDesigner;
 import dsp.filter.design.WinType;
 import qrsdetbyhamilton.QrsDetectorWithQRSInfo;
+import util.MathUtil;
 
 public class EcgProcessor {
 	private ResampleFrom250To360 resampler;
@@ -21,7 +23,7 @@ public class EcgProcessor {
 	private IIRFilter notch50;
 	private List<Short> ecgData;
 	private List<Float> normalizedEcgData;
-	private JSONObject reviewJson;
+	private JSONObject reviewResult;
 	
 	public EcgProcessor() {
 	}
@@ -47,18 +49,16 @@ public class EcgProcessor {
 		return ecgData;
 	}
 
-
-
 	public List<Float> getNormalizedEcgData() {
 		return normalizedEcgData;
 	}
 
-	public JSONObject getReviewJson() {
-		return reviewJson;
+	public JSONObject getReviewResult() {
+		return reviewResult;
 	}
 
 	public JSONArray getBeatBeginPos() {
-		return (JSONArray)getReviewJson().get("BeatBegin");
+		return (JSONArray)getReviewResult().get("BeatBegin");
 	}
 
 	public void process(List<Short> ecgData, int sampleRate) {
@@ -83,37 +83,46 @@ public class EcgProcessor {
 		sampleRate = resampler.getOutSampleRate();
 		
 		// detect the QRS waves and RR interval
-		JSONObject qrsAndRRInterval = getEcgQrsPosAndRRInterval(this.ecgData, sampleRate);
+		JSONObject qrsAndRRInterval = getQrsPosAndRRInterval(this.ecgData, sampleRate);
 		// detect the R wave position and the begin pos of each beat
 		JSONObject rPosAndBeatBegin = getRPosAndBeatBegin(this.ecgData, qrsAndRRInterval);
 
 		JSONArray beatBegin = (JSONArray)rPosAndBeatBegin.get("BeatBegin");
 		normalizedEcgData = normalizeEcgData(this.ecgData, beatBegin);
 		
-		reviewJson = rPosAndBeatBegin;
-		reviewJson.put("QrsPos", qrsAndRRInterval.get("QrsPos"));
-		System.out.println(reviewJson.toString());
-	}
-
-	private JSONObject getEcgQrsAndBeatBeginPos(List<Short> ecgData, int sampleRate) {
-		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
-		for(Short datum : ecgData) {
-			detector.outputRRInterval((int)datum);
-		}
-		List<Long> qrsPos = detector.getQrsPositions();
-		List<Integer> rrInterval = detector.getRrIntervals();
-		List<Long> beatBegin = new ArrayList<>();
-		for(int i = 0; i < rrInterval.size(); i++) {
-			beatBegin.add(qrsPos.get(i+1) - Math.round(rrInterval.get(i)*2.0/5));
-		}
-		JSONObject json = new JSONObject();
-		json.put("QrsPos", qrsPos);
-		json.put("BeatBegin", beatBegin);
-		System.out.println(json);
-		return json;
+		reviewResult = rPosAndBeatBegin;
+		reviewResult.put("QrsPos", qrsAndRRInterval.get("QrsPos"));
+		System.out.println(reviewResult.toString());
 	}
 	
-	private JSONObject getEcgQrsPosAndRRInterval(List<Short> ecgData, int sampleRate) {
+	public void outputNormalizedEcgData(PrintWriter writer, JSONArray beatBegin) {
+		for(int i = 0; i < beatBegin.length()-1; i++) {
+			long begin = beatBegin.getLong(i);
+			long end = beatBegin.getLong(i+1);
+			int length = (int)(end - begin);
+			
+			int fill = 0;
+			if(length > 250) {
+				begin += (length-250)/2;
+				end = begin + 250;
+			} else if(length < 250) {
+				fill = 250-length;
+			}
+			long pos;
+			for(pos = begin; pos <end; pos++) {
+				writer.printf("%.3f", normalizedEcgData.get((int)pos));
+				writer.print(' ');
+			}
+			float lastNum = normalizedEcgData.get((int)(pos-1));
+			for(int j = 0; j < fill; j++) {
+				writer.printf("%.3f", lastNum);
+				writer.print(' ');
+			}
+			writer.print("\r\n");
+		}
+	}
+	
+	private JSONObject getQrsPosAndRRInterval(List<Short> ecgData, int sampleRate) {
 		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
 		for(Short datum : ecgData) {
 			detector.outputRRInterval((int)datum);
@@ -127,7 +136,7 @@ public class EcgProcessor {
 		return json;
 	}
 	
-	public static JSONObject getRPosAndBeatBegin(List<Short> ecgData, JSONObject qrsAndRRInterval) {
+	private static JSONObject getRPosAndBeatBegin(List<Short> ecgData, JSONObject qrsAndRRInterval) {
 		return RWaveDetecter.findRPosAndBeatBegin(ecgData, qrsAndRRInterval);
 	}
 	
@@ -143,17 +152,13 @@ public class EcgProcessor {
 			for(long begin = beatBegin.getLong(i); begin < beatBegin.getLong(i+1); begin++) {
 				oneBeat.add(out.get((int)begin));
 			}
-			//System.out.println(oneBeat);
 			
-			float ave = average(oneBeat);
-			float std = standardDiviation(oneBeat);
+			float ave = MathUtil.floatAve(oneBeat);
+			float std = MathUtil.floatStd(oneBeat);
 			
 			for(int ii = 0; ii < oneBeat.size(); ii++) {
 				oneBeat.set(ii, (oneBeat.get(ii)-ave)/std);
 			}
-			
-			//System.out.println("" + ave + " " + std);
-			//System.out.println(oneBeat);
 			
 			for(long begin = beatBegin.getLong(i),  ii = 0; begin < beatBegin.getLong(i+1); begin++, ii++) {
 				out.set((int)begin, oneBeat.get((int)ii));
@@ -163,29 +168,4 @@ public class EcgProcessor {
 		}
 		return out;
 	}
-	
-	 //均值
-	 public static float average(List<Float> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		 return sum/m; 
-	 }
-	
-	 //标准差σ=sqrt(s^2)
-	 public static float standardDiviation(List<Float> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		  double dAve=sum/m;//求平均值
-		  double dVar=0;
-		  for(int i=0;i<m;i++){
-		      dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
-		  }
-		return (float)Math.sqrt(dVar/(m-1));    
-	 }
 }

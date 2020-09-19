@@ -10,6 +10,7 @@ import dsp.filter.FIRFilter;
 import dsp.filter.IDigitalFilter;
 import dsp.filter.structure.StructType;
 import javafx.util.Pair;
+import util.MathUtil;
 
 public class RWaveDetecter {
 	private static final int QRS_WIDTH_MS = 300; // unit:ms
@@ -43,8 +44,8 @@ public class RWaveDetecter {
 			long beatEnd = qrs + Math.round(rrInterval.get(i+1)*3.0/5);
 			
 			List<Short> temp = ecgData.subList((int)beatBegin, (int)beatEnd);
-			float ave = average(temp);
-			float std = standardDiviation(temp);
+			float ave = MathUtil.shortAve(temp);
+			float std = MathUtil.shortStd(temp);
 			
 			long ii = beatBegin;
 			for(Short d : temp) {
@@ -52,22 +53,22 @@ public class RWaveDetecter {
 				ii++;
 			}
 			
-			Pair<Integer, Float> rlt = min(normData.subList((int)qrsBegin, (int)qrsEnd));
+			Pair<Integer, Float> rlt = MathUtil.floatMin(normData.subList((int)qrsBegin, (int)qrsEnd));
 			float minV = rlt.getValue();
 			int minI = rlt.getKey();
 			
-			rlt = max(normData.subList((int)qrsBegin, (int)qrsEnd));
+			rlt = MathUtil.floatMax(normData.subList((int)qrsBegin, (int)qrsEnd));
 			float maxV = rlt.getValue();
 			int maxI = rlt.getKey();
 			
 			if(Math.abs(maxV) > Math.abs(minV)) {
 				rPos.add(qrsBegin + maxI -1);
 			} else {
-				rlt = min(d2.subList((int)qrsBegin, (int)qrsEnd));
+				rlt = MathUtil.floatMin(d2.subList((int)qrsBegin, (int)qrsEnd));
 				minV = rlt.getValue();
 				minI = rlt.getKey();
 				
-				rlt = max(d2.subList((int)qrsBegin, (int)qrsEnd));
+				rlt = MathUtil.floatMax(d2.subList((int)qrsBegin, (int)qrsEnd));
 				maxV = rlt.getValue();
 				maxI = rlt.getKey();
 				
@@ -85,10 +86,10 @@ public class RWaveDetecter {
 				tmp.add((float)Math.abs(ecgData.get((int)j)));
 			}
 			
-			rlt = max(tmp);
+			rlt = MathUtil.floatMax(tmp);
 			maxV = rlt.getValue();
 			maxI = rlt.getKey();
-			rPos.set(i, rBegin+maxI-1);			
+			rPos.set(i, rBegin+maxI);			
 		}	
 		
 		List<Long> beatBegin = new ArrayList<>();
@@ -113,53 +114,4 @@ public class RWaveDetecter {
 		
 		return d2Data;
 	}
-
-	 //均值
-	 private static float average(List<Short> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		 return sum/m; 
-	 }
-	
-	 //标准差σ=sqrt(s^2)
-	 private static float standardDiviation(List<Short> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(int i=0;i<m;i++){//求和
-			  sum+=x.get(i);
-		  }
-		  double dAve=sum/m;//求平均值
-		  double dVar=0;
-		  for(int i=0;i<m;i++){
-		      dVar+=(x.get(i)-dAve)*(x.get(i)-dAve);
-		  }
-		return (float)Math.sqrt(dVar/(m-1));    
-	 }
-	 
-	 private static Pair<Integer, Float> min(List<Float> x) {
-		 float minV = 100000.0f;
-		 int minI = -1;
-		 for(int i = 0; i < x.size(); i++) {
-			 if(x.get(i) < minV) {
-				 minV = x.get(i);
-				 minI = i;
-			 }
-		 }
-		 return new Pair<Integer, Float>(minI, minV);
-	 }
-	 
-	 private static Pair<Integer, Float> max(List<Float> x) {
-		 float maxV = -100000.0f;
-		 int maxI = -1;
-		 for(int i = 0; i < x.size(); i++) {
-			 if(x.get(i) > maxV) {
-				 maxV = x.get(i);
-				 maxI = i;
-			 }
-		 }
-		 return new Pair<Integer, Float>(maxI, maxV);
-	 }
 }

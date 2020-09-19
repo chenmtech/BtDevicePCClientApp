@@ -169,8 +169,8 @@ public class Main extends Application implements IDbOperationCallback{
         		File txtFile = new File(txtFileName);
         		try(PrintWriter resampleWriter = new PrintWriter(resampleFile); PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
         			resampleWriter.print(ecgProc.getEcgData().toString());
-        			reviewWriter.print(ecgProc.getReviewJson().toString());
-        			outputEcgDataToTxtFile(txtWriter, ecgProc.getNormalizedEcgData(), ecgProc.getBeatBeginPos());
+        			reviewWriter.print(ecgProc.getReviewResult().toString());
+        			ecgProc.outputNormalizedEcgData(txtWriter, ecgProc.getBeatBeginPos());
         			
         			infoPane.setInfo("已将处理结果保存到文件中。");
         		}
@@ -179,33 +179,6 @@ public class Main extends Application implements IDbOperationCallback{
 				e.printStackTrace();
 			}
         }
-	}
-	
-	private <T> void outputEcgDataToTxtFile(PrintWriter writer, List<T> ecgData, JSONArray beatBegin) {
-		for(int i = 0; i < beatBegin.length()-1; i++) {
-			long begin = beatBegin.getLong(i);
-			long end = beatBegin.getLong(i+1);
-			int length = (int)(end - begin);
-			
-			int fill = 0;
-			if(length > 250) {
-				begin += (length-250)/2;
-				end = begin + 250;
-			} else if(length < 250) {
-				fill = 250-length;
-			}
-			long pos;
-			for(pos = begin; pos <end; pos++) {
-				writer.printf("%.3f", (float)ecgData.get((int)pos));
-				writer.print(' ');
-			}
-			T lastNum = ecgData.get((int)(pos-1));
-			for(int j = 0; j < fill; j++) {
-				writer.printf("%.3f", (float)lastNum);
-				writer.print(' ');
-			}
-			writer.print("\r\n");
-		}
 	}
 	
 	@Override
