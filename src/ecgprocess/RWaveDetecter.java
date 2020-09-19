@@ -62,7 +62,7 @@ public class RWaveDetecter {
 			int maxI = rlt.getKey();
 			
 			if(Math.abs(maxV) > Math.abs(minV)) {
-				rPos.add(qrsBegin + maxI -1);
+				rPos.add(qrsBegin + maxI);
 			} else {
 				rlt = MathUtil.floatMin(d2.subList((int)qrsBegin, (int)qrsEnd));
 				minV = rlt.getValue();
@@ -73,9 +73,9 @@ public class RWaveDetecter {
 				maxI = rlt.getKey();
 				
 				if(Math.abs(maxV) > Math.abs(minV)) {
-					rPos.add(qrsBegin + maxI -3);
+					rPos.add(qrsBegin + maxI - 2);
 				} else {
-					rPos.add(qrsBegin + minI -3);
+					rPos.add(qrsBegin + minI - 2);
 				}
 			}
 			
@@ -89,7 +89,7 @@ public class RWaveDetecter {
 			rlt = MathUtil.floatMax(tmp);
 			maxV = rlt.getValue();
 			maxI = rlt.getKey();
-			rPos.set(i, rBegin+maxI);			
+			rPos.set(i, rBegin + maxI);			
 		}	
 		
 		List<Long> beatBegin = new ArrayList<>();
