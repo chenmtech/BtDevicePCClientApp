@@ -142,7 +142,7 @@ public class Main extends Application implements IDbOperationCallback{
                     builder.append(tempString);
                 }
                 JSONObject json = new JSONObject(builder.toString());
-                System.out.println(json.toString());
+                //System.out.println(json.toString());
                 RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
                 if(type != RecordType.ECG) {
                 	infoPane.setInfo("只能处理心电信号。");
@@ -161,16 +161,13 @@ public class Main extends Application implements IDbOperationCallback{
     			
         		String srcFileName = file.getAbsolutePath();
         		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
-        		String resampleJsonFileName = tmpFileName + "-resample.json";
         		String reviewJsonFileName = tmpFileName + "-review.json";
         		String txtFileName = tmpFileName + ".txt";
-        		File resampleFile = new File(resampleJsonFileName);
         		File reviewFile = new File(reviewJsonFileName);
         		File txtFile = new File(txtFileName);
-        		try(PrintWriter resampleWriter = new PrintWriter(resampleFile); PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
-        			resampleWriter.print(ecgProc.getEcgData().toString());
+        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
         			reviewWriter.print(ecgProc.getReviewResult().toString());
-        			ecgProc.outputNormalizedEcgData(txtWriter, ecgProc.getBeatBeginPos());
+        			txtWriter.print(ecgProc.getSegEcgDataString());
         			
         			infoPane.setInfo("已将处理结果保存到文件中。");
         		}

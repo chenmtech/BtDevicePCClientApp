@@ -61,7 +61,7 @@ public class RWaveDetecter {
 			float maxV = rlt.getValue();
 			int maxI = rlt.getKey();
 			
-			if(Math.abs(maxV) > Math.abs(minV)) {
+			if(Math.abs(maxV) > 2*Math.abs(minV)/3) {
 				rPos.add(qrsBegin + maxI);
 			} else {
 				rlt = MathUtil.floatMin(d2.subList((int)qrsBegin, (int)qrsEnd));
