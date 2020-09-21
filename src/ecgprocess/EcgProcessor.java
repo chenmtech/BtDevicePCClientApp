@@ -6,6 +6,8 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import dsp.filter.design.DCBlockDesigner;
+
 import dsp.filter.FIRFilter;
 import dsp.filter.IIRFilter;
 import dsp.filter.design.FIRDesigner;
@@ -34,18 +36,17 @@ public class EcgProcessor {
 			return;
 		}
 		
-		ResampleFrom250To360 resampler = new ResampleFrom250To360();
+		// do filtering
+		IIRFilter dcBlocker = DCBlockDesigner.design(1, sampleRate);
 		IIRFilter notch50 = designNotch(50, sampleRate);
 		FIRFilter lpFilter = designLpFilter(sampleRate);
-		//System.out.println(lpFilter);
-		
-		// do filtering
 		List<Short> afterFilter = new ArrayList<Short>();
 		for(Short d : ecgData) {
-			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(d))));
+			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(dcBlocker.filter(d)))));
 		}		
 		
 		// do resampling
+		ResampleFrom250To360 resampler = new ResampleFrom250To360();
 		ecgData = resampler.resample(afterFilter);
 		sampleRate = resampler.getOutSampleRate();
 		
