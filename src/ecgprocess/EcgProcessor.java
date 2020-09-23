@@ -42,7 +42,7 @@ public class EcgProcessor {
 		FIRFilter lpFilter = designLpFilter(sampleRate);
 		List<Short> afterFilter = new ArrayList<Short>();
 		for(Short d : ecgData) {
-			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(dcBlocker.filter(d)))));
+			afterFilter.add((short)Math.round(lpFilter.filter(notch50.filter(d))));
 		}		
 		
 		// do resampling

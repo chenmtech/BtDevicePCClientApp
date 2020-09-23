@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -58,7 +59,7 @@ public class Main extends Application implements IDbOperationCallback{
 			root.setBottom(ctrlPane);
 			root.setPadding(new Insets(10,10,10,10));
 			
-			Scene scene = new Scene(root,1200,800);
+			Scene scene = new Scene(root,1600,800);
 			recordPane.prefWidthProperty().bind(scene.widthProperty());
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(TITLE);
@@ -145,7 +146,7 @@ public class Main extends Application implements IDbOperationCallback{
                 //System.out.println(json.toString());
                 RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
                 if(type != RecordType.ECG) {
-                	infoPane.setInfo("只能处理心电信号。");
+                	infoPane.setInfo("对不起，暂时只能处理心电信号。");
                 	return;
                 }
                 String ecgStr = json.getString("ecgData");
@@ -161,21 +162,109 @@ public class Main extends Application implements IDbOperationCallback{
     			
         		String srcFileName = file.getAbsolutePath();
         		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
+        		
+        		// save review result to json file
         		String reviewJsonFileName = tmpFileName + "-review.json";
-        		String txtFileName = tmpFileName + ".txt";
         		File reviewFile = new File(reviewJsonFileName);
-        		File txtFile = new File(txtFileName);
-        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile); PrintWriter txtWriter = new PrintWriter(txtFile)) {
+        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
         			reviewWriter.print(ecgProc.getReviewResult().toString());
-        			txtWriter.print(ecgProc.getSegEcgDataString());
-        			
-        			infoPane.setInfo("已将处理结果保存到文件中。");
         		}
+        		
+        		// save the string of the segment data to txt file
+/*        		String txtFileName = tmpFileName + ".txt";
+        		File txtFile = new File(txtFileName);
+        		try(PrintWriter txtWriter = new PrintWriter(txtFile)) {
+        			txtWriter.print(ecgProc.getSegEcgDataString());
+        		}*/
+        		
+    			infoPane.setInfo("已将处理结果保存到文件中。");
         	} catch (IOException e) {
         		infoPane.setInfo("处理信号失败");
 				e.printStackTrace();
 			}
         }
+	}
+	
+	public void diagnoseRecord() {
+		if(!ACCOUNT.isLogin()) {
+			//login();
+			//return;
+		}
+		
+		Process proc;
+        try {
+            proc = Runtime.getRuntime().exec("python D:\\pythoncode\\demo1.py");// 执行py文件
+            //用输入输出流来截取结果
+            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String line = null;
+            while ((line = in.readLine()) != null) {
+                System.out.println(line);
+            }
+            BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+            String errStr = null;
+            while ((errStr = err.readLine()) != null) {
+                System.out.println(errStr);
+            }
+            in.close();
+            err.close();
+            proc.waitFor();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+		
+		
+		
+		
+
+		/*
+        FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+        File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
+        
+        if(file != null){
+        	try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        		String tempString = null;
+                StringBuilder builder = new StringBuilder();
+                // 一次读入一行，直到读入null为文件结束
+                while ((tempString = reader.readLine()) != null) {
+                    builder.append(tempString);
+                }
+                JSONObject json = new JSONObject(builder.toString());
+                //System.out.println(json.toString());
+                RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
+                if(type != RecordType.ECG) {
+                	infoPane.setInfo("对不起，暂时只能处理心电信号。");
+                	return;
+                }
+                String ecgStr = json.getString("ecgData");
+                String[] ecgDataStr = ecgStr.split(",");
+                List<Short> ecgData = new ArrayList<>();
+                for(String str : ecgDataStr) {
+                	ecgData.add(Short.parseShort(str));
+                }
+                int sampleRate = json.getInt("sampleRate");
+                
+                EcgProcessor ecgProc = new EcgProcessor();
+                ecgProc.process(ecgData, sampleRate);
+    			
+        		String srcFileName = file.getAbsolutePath();
+        		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
+        		
+        		// save review result to json file
+        		String reviewJsonFileName = tmpFileName + "-review.json";
+        		File reviewFile = new File(reviewJsonFileName);
+        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
+        			reviewWriter.print(ecgProc.getReviewResult().toString());
+        		}
+        		
+    			infoPane.setInfo("已将处理结果保存到文件中。");
+        	} catch (IOException e) {
+        		infoPane.setInfo("处理信号失败");
+				e.printStackTrace();
+			}
+        }
+        */
 	}
 	
 	@Override
