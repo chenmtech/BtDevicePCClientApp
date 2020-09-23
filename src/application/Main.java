@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
+import com.cmtech.web.connection.ConnectionPoolFactory;
 
 import ecgprocess.EcgProcessor;
 import javafx.application.Application;
@@ -71,6 +72,14 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
+	@Override
+	public void stop() throws Exception {
+		ConnectionPoolFactory.closeConnectionPool();
+		super.stop();
+	}
+
+
+
 	public static void main(String[] args) {
 		launch(args);
 	}
