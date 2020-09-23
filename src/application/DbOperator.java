@@ -28,7 +28,7 @@ public class DbOperator {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				DbUtil.setUserInfo(name, password);
+				DbUtil.setDbUser(name, password);
 				Connection conn = DbUtil.connect();
 				if(conn != null) {
 					Platform.runLater(()->callback.onLoginUpdated(true));

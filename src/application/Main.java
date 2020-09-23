@@ -226,60 +226,7 @@ public class Main extends Application implements IDbOperationCallback{
         } else {
         	return;
         }
-		
 
-		
-		
-		
-		
-
-		/*
-        FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
-        File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
-        
-        if(file != null){
-        	try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
-        		String tempString = null;
-                StringBuilder builder = new StringBuilder();
-                // 一次读入一行，直到读入null为文件结束
-                while ((tempString = reader.readLine()) != null) {
-                    builder.append(tempString);
-                }
-                JSONObject json = new JSONObject(builder.toString());
-                //System.out.println(json.toString());
-                RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
-                if(type != RecordType.ECG) {
-                	infoPane.setInfo("对不起，暂时只能处理心电信号。");
-                	return;
-                }
-                String ecgStr = json.getString("ecgData");
-                String[] ecgDataStr = ecgStr.split(",");
-                List<Short> ecgData = new ArrayList<>();
-                for(String str : ecgDataStr) {
-                	ecgData.add(Short.parseShort(str));
-                }
-                int sampleRate = json.getInt("sampleRate");
-                
-                EcgProcessor ecgProc = new EcgProcessor();
-                ecgProc.process(ecgData, sampleRate);
-    			
-        		String srcFileName = file.getAbsolutePath();
-        		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
-        		
-        		// save review result to json file
-        		String reviewJsonFileName = tmpFileName + "-review.json";
-        		File reviewFile = new File(reviewJsonFileName);
-        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
-        			reviewWriter.print(ecgProc.getReviewResult().toString());
-        		}
-        		
-    			infoPane.setInfo("已将处理结果保存到文件中。");
-        	} catch (IOException e) {
-        		infoPane.setInfo("处理信号失败");
-				e.printStackTrace();
-			}
-        }
-        */
 	}
 	
 	@Override
