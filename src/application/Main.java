@@ -191,28 +191,43 @@ public class Main extends Application implements IDbOperationCallback{
 			//return;
 		}
 		
-		Process proc;
-        try {
-            proc = Runtime.getRuntime().exec("python D:\\pythoncode\\demo1.py");// 执行py文件
-            //用输入输出流来截取结果
-            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            String line = null;
-            while ((line = in.readLine()) != null) {
-                System.out.println(line);
+		FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+        File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
+
+        if(file != null){
+        	try {
+        		Process proc;
+            	String[] args = new String[] { "d:\\python38\\python.exe", "D:\\PythonCode\\ecgDiagnose.py", "D:\\pythoncode\\my_model2-9222.h5", file.getAbsolutePath()};
+                proc = Runtime.getRuntime().exec(args);// 执行py文件
+                //用输入输出流来截取结果
+                BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                StringBuilder builder = new StringBuilder();
+                String line = null;
+                while ((line = in.readLine()) != null) {
+                    builder.append(line);
+                }
+                BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+                String errStr = null;
+                while ((errStr = err.readLine()) != null) {
+                    System.out.println(errStr);
+                }
+                in.close();
+                err.close();
+                proc.waitFor();
+                JSONObject resultJson = new JSONObject(builder.toString());
+                JSONArray resultList = (JSONArray) resultJson.get("Result");
+                System.out.println(resultList);
+                int length = Math.min(100, resultJson.toString().length());
+                infoPane.setInfo(resultJson.toString().substring(0, length));
+            } catch (Exception e) {
+                e.printStackTrace();
+                infoPane.setInfo("诊断错误：" + e.getMessage());
             }
-            BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-            String errStr = null;
-            while ((errStr = err.readLine()) != null) {
-                System.out.println(errStr);
-            }
-            in.close();
-            err.close();
-            proc.waitFor();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } else {
+        	return;
         }
+		
+
 		
 		
 		
