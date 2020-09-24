@@ -50,7 +50,8 @@ public class CtrlPane extends HBox{
 		Button btnLoadNext = new Button("继续查询");
 		Button btnProcessSignal = new Button("处理ECG信号");
 		Button btnDiagnose = new Button("诊断ECG信号");
-		getChildren().addAll(btnLogin, btnReload, btnLoadNext, btnProcessSignal, btnDiagnose);
+		Button btnConfig = new Button("设置环境");
+		getChildren().addAll(btnLogin, btnReload, btnLoadNext, btnProcessSignal, btnDiagnose, btnConfig);
 		
 		btnLogin.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -90,6 +91,13 @@ public class CtrlPane extends HBox{
 			@Override
 			public void handle(ActionEvent event) {
 				main.diagnoseRecord();
+			}
+		});
+		
+		btnConfig.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				main.config();
 			}
 		});
 	}

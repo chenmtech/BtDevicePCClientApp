@@ -21,11 +21,12 @@ import ecgprocess.EcgProcessor;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
@@ -33,6 +34,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import util.FileDialogUtil;
 
@@ -45,6 +47,7 @@ public class Main extends Application implements IDbOperationCallback{
 	private final InfoPane infoPane = new InfoPane();
 	private final RecordPane recordPane = new RecordPane(this);
 	private DbOperator dbOperator;
+	private MyProperties properties;
 	private long fromTime = new Date().getTime();
 	
 	@Override
@@ -67,6 +70,8 @@ public class Main extends Application implements IDbOperationCallback{
 			primaryStage.show();
 			
 			dbOperator  = new DbOperator(this);
+			
+			properties = new MyProperties();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -87,6 +92,11 @@ public class Main extends Application implements IDbOperationCallback{
 	public void login() {
 		final LoginStage loginStage = new LoginStage();
 		loginStage.show();
+	}
+	
+	public void config() {
+		final ConfigureStage stage = new ConfigureStage();
+		stage.show();
 	}
 	
 	public void reload(RecordType type, String creator, long searchTime, String noteSearchStr) {
@@ -206,7 +216,7 @@ public class Main extends Application implements IDbOperationCallback{
         if(file != null){
         	try {
         		Process proc;
-            	String[] args = new String[] { "d:\\python38\\python.exe", "D:\\PythonCode\\ecgDiagnose.py", "D:\\pythoncode\\my_model2-9222.h5", file.getAbsolutePath()};
+            	String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), file.getAbsolutePath()};
                 proc = Runtime.getRuntime().exec(args);// 执行py文件
                 //用输入输出流来截取结果
                 BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -224,7 +234,9 @@ public class Main extends Application implements IDbOperationCallback{
                 err.close();
                 proc.waitFor();
                 JSONObject resultJson = new JSONObject(builder.toString());
+                JSONArray predictList = (JSONArray) resultJson.get("Predict");
                 JSONArray resultList = (JSONArray) resultJson.get("Result");
+                System.out.println(predictList);
                 System.out.println(resultList);
                 int length = Math.min(100, resultJson.toString().length());
                 infoPane.setInfo(resultJson.toString().substring(0, length));
@@ -304,8 +316,14 @@ public class Main extends Application implements IDbOperationCallback{
 			pane.add(new Label("密码："), 0, 1);
 			PasswordField pfPwd = new PasswordField();
 			pane.add(pfPwd, 1, 1);
-			Button btnOK = new Button("确定");
-			btnOK.setOnAction(new EventHandler<ActionEvent>() {
+			
+			DialogPane dialogPane = new DialogPane();
+			dialogPane.setContent(pane);
+			dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+			Button btnOk = (Button) dialogPane.lookupButton(ButtonType.OK);
+			Button btnCancel = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
+			
+			btnOk.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
 					String name = tfName.getText();
@@ -317,39 +335,78 @@ public class Main extends Application implements IDbOperationCallback{
 					close();
 				}
 			});
-			pane.add(btnOK, 1, 2);
-			GridPane.setHalignment(btnOK, HPos.RIGHT);
-			Scene scene = new Scene(pane);
-			setScene(scene);
+			
+			btnCancel.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					close();
+				}
+			});
+			
+			initOwner(primaryStage);
+			initModality(Modality.WINDOW_MODAL);
+			setResizable(false);
+			setScene(new Scene(dialogPane));
 			setTitle("请登录");
 		}
 	}
 	
-/*	private void outputEcgDataToTxtFile(PrintWriter writer, List<Short> ecgData, JSONObject json) {
-		JSONArray beatBegin = (JSONArray)json.get("BeatBegin");
-		for(int i = 0; i < beatBegin.length()-1; i++) {
-			long begin = beatBegin.getLong(i);
-			long end = beatBegin.getLong(i+1);
-			int length = (int)(end - begin);
+	private class ConfigureStage extends Stage{	
+		ConfigureStage() {
+			GridPane pane = new GridPane();
+			pane.setAlignment(Pos.CENTER);
+			pane.setPadding(new Insets(10,10,10,10));
+			pane.setHgap(5);
+			pane.setVgap(5);
+			pane.add(new Label("Python.exe："), 0, 0);
+			TextField tfPythonExe = new TextField(); tfPythonExe.setPrefColumnCount(30);
+			tfPythonExe.setText(properties.getPythonExe());pane.add(tfPythonExe, 1, 0);
 			
-			int fill = 0;
-			if(length > 250) {
-				begin += (length-250)/2;
-				end = begin + 250;
-			} else if(length < 250) {
-				fill = 250-length;
-			}
-			long pos;
-			for(pos = begin; pos <end; pos++) {
-				writer.print(ecgData.get((int)pos));
-				writer.print(' ');
-			}
-			int lastNum = ecgData.get((int)(pos-1));
-			for(int j = 0; j < fill; j++) {
-				writer.print(lastNum);
-				writer.print(' ');
-			}
-			writer.print("\r\n");
+			pane.add(new Label("Ecg脚本："), 0, 1);
+			TextField tfScript = new TextField(); pane.add(tfScript, 1, 1);
+			tfScript.setText(properties.getEcgScript());
+			
+			pane.add(new Label("网络模型："), 0, 2);
+			TextField tfModel = new TextField(); pane.add(tfModel, 1, 2);
+			tfModel.setText(properties.getEcgNNModel());
+			
+			DialogPane dialogPane = new DialogPane();
+			dialogPane.setContent(pane);
+			dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+			Button btnOk = (Button) dialogPane.lookupButton(ButtonType.OK);
+			Button btnCancel = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
+			
+			btnOk.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					String pythonExe = tfPythonExe.getText();
+					String ecgScript = tfScript.getText();
+					String nnModel = tfModel.getText();
+					properties.setPythonExe(pythonExe);
+					properties.setEcgScript(ecgScript);
+					properties.setEcgNNModel(nnModel);
+					try {
+						properties.save();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					close();
+				}
+			});
+			
+			btnCancel.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					close();
+				}
+			});
+			
+			initOwner(primaryStage);
+			initModality(Modality.WINDOW_MODAL);
+			setResizable(false);
+			setScene(new Scene(dialogPane, 600, -1));
+			setTitle("请设置");
 		}
-	}*/
+	}
 }
