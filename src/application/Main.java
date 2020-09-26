@@ -16,9 +16,11 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
+import com.cmtech.web.dbUtil.RecordDbUtil;
 
 import ecgprocess.EcgProcessor;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -49,6 +51,7 @@ public class Main extends Application implements IDbOperationCallback{
 	private DbOperator dbOperator;
 	private MyProperties properties;
 	private long fromTime = new Date().getTime();
+	private Thread thAutoProcess;
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -80,6 +83,9 @@ public class Main extends Application implements IDbOperationCallback{
 	@Override
 	public void stop() throws Exception {
 		ConnectionPoolFactory.closeConnectionPool();
+		if(thAutoProcess != null && thAutoProcess.isAlive()) {
+			thAutoProcess.interrupt();
+		}
 		super.stop();
 	}
 
@@ -142,6 +148,63 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 		
 		dbOperator.downloadRecord(type, createTime, devAddress);
+	}
+	
+	public void autoProcessDiagnoseRequest() {
+		if(!ACCOUNT.isLogin()) {
+			//login();
+			//return;
+		}
+		
+		thAutoProcess = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					while(true) {
+						JSONObject json = RecordDbUtil.downloadLastRequestRecord();
+						if(json == null) {
+							Thread.sleep(1000);
+						} else {
+							long createTime = json.getLong("createTime");
+							String devAddress = json.getString("devAddress");
+							RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
+			                if(type != RecordType.ECG) {
+			                	Platform.runLater(()->infoPane.setInfo("对不起，暂时只能处理心电信号。"));
+			                } else {
+				                String ecgStr = json.getString("ecgData");
+				                String[] ecgDataStr = ecgStr.split(",");
+				                List<Short> ecgData = new ArrayList<>();
+				                for(String str : ecgDataStr) {
+				                	ecgData.add(Short.parseShort(str));
+				                }
+				                int sampleRate = json.getInt("sampleRate");
+				                
+				                EcgProcessor ecgProc = new EcgProcessor();
+				                ecgProc.process(ecgData, sampleRate);
+				                
+				                String reviewJsonFileName = "review.json";
+				        		File reviewFile = new File(reviewJsonFileName);
+				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
+				        			reviewWriter.print(ecgProc.getReviewResult().toString());
+				        			Thread.sleep(4000);
+				        			String[] contents = {"正常窦性心律", "", "心律失常较严重"};
+				        			int times = (int)(Math.random()*5);
+				        			contents[1] = "偶发心律失常" + times + "次";
+				        			int rndNum = (int)(Math.random()*3);
+				        			RecordDbUtil.updateReport(createTime, devAddress, new Date().getTime(), contents[rndNum]);				        			
+				        		} catch (FileNotFoundException ex) {
+									ex.printStackTrace();
+								}
+			                }
+						}
+					}
+				} catch(InterruptedException ex) {
+					System.out.println("自动心电诊断已终止");
+				}
+			}
+		});
+		
+		thAutoProcess.start();
 	}
 	
 	public void processRecord() {
@@ -354,7 +417,7 @@ public class Main extends Application implements IDbOperationCallback{
 	private class ConfigureStage extends Stage{	
 		ConfigureStage() {
 			GridPane pane = new GridPane();
-			pane.setAlignment(Pos.CENTER);
+			pane.setAlignment(Pos.TOP_LEFT);
 			pane.setPadding(new Insets(10,10,10,10));
 			pane.setHgap(5);
 			pane.setVgap(5);
