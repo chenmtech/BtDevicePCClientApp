@@ -162,9 +162,7 @@ public class Main extends Application implements IDbOperationCallback{
 				try {
 					while(true) {
 						JSONObject json = RecordDbUtil.downloadLastRequestRecord();
-						if(json == null) {
-							Thread.sleep(1000);
-						} else {
+						if(json != null) {
 							long createTime = json.getLong("createTime");
 							String devAddress = json.getString("devAddress");
 							RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
@@ -182,24 +180,55 @@ public class Main extends Application implements IDbOperationCallback{
 				                EcgProcessor ecgProc = new EcgProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
-				                String reviewJsonFileName = "review.json";
+				                String reviewJsonFileName = "d:\\review.json";
 				        		File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
 				        			reviewWriter.print(ecgProc.getReviewResult().toString());
-				        			Thread.sleep(4000);
-				        			String[] contents = {"正常窦性心律", "", "心律失常较严重"};
-				        			int times = (int)(Math.random()*5);
-				        			contents[1] = "偶发心律失常" + times + "次";
-				        			int rndNum = (int)(Math.random()*3);
-				        			RecordDbUtil.updateReport(createTime, devAddress, new Date().getTime(), contents[rndNum]);				        			
-				        		} catch (FileNotFoundException ex) {
-									ex.printStackTrace();
-								}
-			                }
+				        		} catch (FileNotFoundException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+									continue;
+								}  
+				        			
+			        			Process proc;
+			                	String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
+			                    proc = Runtime.getRuntime().exec(args);// 执行py文件
+			                    //用输入输出流来截取结果
+			                    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+			                    StringBuilder builder = new StringBuilder();
+			                    String line = null;
+			                    while ((line = in.readLine()) != null) {
+			                        builder.append(line);
+			                    }
+			                    BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+			                    String errStr = null;
+			                    while ((errStr = err.readLine()) != null) {
+			                        //System.out.println(errStr);
+			                    }
+			                    in.close();
+			                    err.close();
+			                    proc.waitFor();
+			                    JSONObject resultJson = new JSONObject(builder.toString());
+			                    JSONArray predictList = (JSONArray) resultJson.get("Predict");
+			                    JSONArray resultList = (JSONArray) resultJson.get("Result");
+			                    System.out.println(predictList);
+			                    System.out.println(resultList);
+			                    int times = 0;
+			                    for(Object n : resultList) {
+			                    	int num = (Integer)n;
+			                    	times += num;
+			                    }
+			                    String content = (times == 0) ? "正常窦性心律" : "发现" + times + "次异常心跳";
+			        			RecordDbUtil.updateReport(createTime, devAddress, new Date().getTime(), content);				        			
+			        		}
 						}
+						Thread.sleep(1000);
 					}
 				} catch(InterruptedException ex) {
 					System.out.println("自动心电诊断已终止");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		});

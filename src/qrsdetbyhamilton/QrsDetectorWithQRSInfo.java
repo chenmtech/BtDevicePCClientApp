@@ -23,7 +23,7 @@ public class QrsDetectorWithQRSInfo extends QrsDetector {
 			if(firstPeak) {
 				firstPeak = false;
 				qrsPositions.add((long) (RRCount-delay));
-				System.out.println(""+delay);
+				//System.out.println(""+delay);
 			} else {
 				RRInterval = RRCount-delay+1;
 				rrIntervals.add(RRInterval);

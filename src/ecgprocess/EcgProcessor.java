@@ -129,7 +129,7 @@ public class EcgProcessor {
 				oneBeat.add(last);
 			}
 			segEcgData.add(oneBeat);
-			System.out.println(oneBeat.size());
+			//System.out.println(oneBeat.size());
 		}
 		return segEcgData;
 	}
