@@ -18,7 +18,8 @@ public class FileDialogUtil {
 			defaultDir = DIR;
         fileChooser.setInitialDirectory(new File(defaultDir));
         fileChooser.setInitialFileName(defaultName);
-        fileChooser.getExtensionFilters().add(filter);
+        if(filter != null)
+        	fileChooser.getExtensionFilters().add(filter);
         File file;
         if(open)
         	file = fileChooser.showOpenDialog(owner);

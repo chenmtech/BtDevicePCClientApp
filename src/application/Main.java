@@ -432,14 +432,44 @@ public class Main extends Application implements IDbOperationCallback{
 			pane.add(new Label("Python.exe："), 0, 0);
 			TextField tfPythonExe = new TextField(); tfPythonExe.setPrefColumnCount(30);
 			tfPythonExe.setText(properties.getPythonExe());pane.add(tfPythonExe, 1, 0);
+			Button btnPythonExe = new Button("选择");
+			final FileChooser.ExtensionFilter exeFilter =  new FileChooser.ExtensionFilter("exe文件","*.exe");
+			btnPythonExe.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					File file = FileDialogUtil.openFileDialog(ConfigureStage.this, true, null, "Python.exe", exeFilter);
+					tfPythonExe.setText(file.getAbsolutePath());
+				}				
+			});
+			pane.add(btnPythonExe, 2, 0);
 			
-			pane.add(new Label("Ecg脚本："), 0, 1);
+			pane.add(new Label("诊断脚本(.py)："), 0, 1);
 			TextField tfScript = new TextField(); pane.add(tfScript, 1, 1);
 			tfScript.setText(properties.getEcgScript());
+			Button btnScript = new Button("选择");
+			final FileChooser.ExtensionFilter pyFilter =  new FileChooser.ExtensionFilter("py文件","*.py");
+			btnScript.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					File file = FileDialogUtil.openFileDialog(ConfigureStage.this, true, null, null, pyFilter);
+					tfScript.setText(file.getAbsolutePath());
+				}				
+			});
+			pane.add(btnScript, 2, 1);
 			
-			pane.add(new Label("网络模型："), 0, 2);
+			pane.add(new Label("诊断模型："), 0, 2);
 			TextField tfModel = new TextField(); pane.add(tfModel, 1, 2);
 			tfModel.setText(properties.getEcgNNModel());
+			Button btnModel = new Button("选择");
+			btnModel.setOnAction(new EventHandler<ActionEvent>() {
+				@Override
+				public void handle(ActionEvent event) {
+					File file = FileDialogUtil.openFileDialog(ConfigureStage.this, true, null, null, null);
+					System.out.println(file.getAbsolutePath());
+					tfModel.setText(file.getAbsolutePath());
+				}				
+			});
+			pane.add(btnModel, 2, 2);
 			
 			DialogPane dialogPane = new DialogPane();
 			dialogPane.setContent(pane);
