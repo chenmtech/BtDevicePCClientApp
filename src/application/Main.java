@@ -18,6 +18,7 @@ import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
 import com.cmtech.web.dbUtil.RecordDbUtil;
 
+import ecgprocess.EcgDiagnoseModel;
 import ecgprocess.EcgProcessor;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -180,7 +181,7 @@ public class Main extends Application implements IDbOperationCallback{
 				                EcgProcessor ecgProc = new EcgProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
-				                String reviewJsonFileName = "d:\\review.json";
+				                String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
 				        		File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
 				        			reviewWriter.print(ecgProc.getReviewResult().toString());
@@ -189,36 +190,14 @@ public class Main extends Application implements IDbOperationCallback{
 									e.printStackTrace();
 									continue;
 								}  
-				        			
-			        			Process proc;
-			                	String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
-			                    proc = Runtime.getRuntime().exec(args);// 执行py文件
-			                    //用输入输出流来截取结果
-			                    BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			                    StringBuilder builder = new StringBuilder();
-			                    String line = null;
-			                    while ((line = in.readLine()) != null) {
-			                        builder.append(line);
-			                    }
-			                    BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-			                    String errStr = null;
-			                    while ((errStr = err.readLine()) != null) {
-			                        //System.out.println(errStr);
-			                    }
-			                    in.close();
-			                    err.close();
-			                    proc.waitFor();
-			                    JSONObject resultJson = new JSONObject(builder.toString());
-			                    JSONArray predictList = (JSONArray) resultJson.get("Predict");
-			                    JSONArray resultList = (JSONArray) resultJson.get("Result");
-			                    System.out.println(predictList);
-			                    System.out.println(resultList);
-			                    int times = 0;
-			                    for(Object n : resultList) {
-			                    	int num = (Integer)n;
-			                    	times += num;
-			                    }
-			                    String content = (times == 0) ? "正常窦性心律" : "发现" + times + "次异常心跳";
+				        		
+				        		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
+			                    EcgDiagnoseModel diagnoseModel = new EcgDiagnoseModel();
+				        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
+				        		System.out.println(diagnoseModel.getDiagnoseResult());
+				        		
+			                    int abNum = diagnoseModel.getAbnormalBeat();
+			                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
 			        			RecordDbUtil.updateReport(createTime, devAddress, new Date().getTime(), content);				        			
 			        		}
 						}
