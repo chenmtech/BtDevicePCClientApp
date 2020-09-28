@@ -153,8 +153,8 @@ public class Main extends Application implements IDbOperationCallback{
 	
 	public void autoProcessDiagnoseRequest() {
 		if(!ACCOUNT.isLogin()) {
-			//login();
-			//return;
+			login();
+			return;
 		}
 		
 		thAutoProcess = new Thread(new Runnable() {
