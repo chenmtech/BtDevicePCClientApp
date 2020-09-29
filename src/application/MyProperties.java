@@ -17,13 +17,12 @@ public class MyProperties {
 
 	public MyProperties() throws IOException {
 		File file = new File(FILE_NAME);
-		if(file.exists()) {
-			try(InputStream in = new FileInputStream(file)) {
-				properties.load(in);
-			}
-		} else {
+		if(!file.exists())
 			file.createNewFile();
-		}		
+		
+		try(InputStream in = new FileInputStream(file)) {
+			properties.load(in);
+		}
 	}
 	
 	public void save() throws IOException {

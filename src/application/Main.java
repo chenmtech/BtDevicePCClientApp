@@ -75,7 +75,6 @@ public class Main extends Application implements IDbOperationCallback{
 			
 			dbOperator  = new DbOperator(this);
 			
-			properties = new MyProperties();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -102,8 +101,14 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	public void config() {
-		final ConfigureStage stage = new ConfigureStage();
-		stage.show();
+		ConfigureStage stage;
+		try {
+			stage = new ConfigureStage();
+			stage.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+			infoPane.setInfo("初始化配置文件错误。");
+		}
 	}
 	
 	public void reload(RecordType type, String creator, long searchTime, String noteSearchStr) {
@@ -423,7 +428,8 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	private class ConfigureStage extends Stage{	
-		ConfigureStage() {
+		ConfigureStage() throws IOException {
+			properties = new MyProperties();
 			GridPane pane = new GridPane();
 			pane.setAlignment(Pos.TOP_LEFT);
 			pane.setPadding(new Insets(10,10,10,10));
