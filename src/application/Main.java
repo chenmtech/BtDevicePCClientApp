@@ -203,7 +203,7 @@ public class Main extends Application implements IDbOperationCallback{
 				        		
 			                    int abNum = diagnoseModel.getAbnormalBeat();
 			                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
-			        			RecordDbUtil.updateReport(createTime, devAddress, new Date().getTime(), content);				        			
+			        			RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), content);				        			
 			        		}
 						}
 						Thread.sleep(1000);
