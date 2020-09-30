@@ -198,22 +198,23 @@ public class Main extends Application implements IDbOperationCallback{
 				        		
 				        		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
 			                    EcgDiagnoseModel diagnoseModel = new EcgDiagnoseModel();
-				        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
-				        		System.out.println(diagnoseModel.getDiagnoseResult());
-				        		
-			                    int abNum = diagnoseModel.getAbnormalBeat();
-			                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
-			        			RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), content);				        			
+				        		try {
+									diagnoseModel.process(args[0], args[1], args[2], args[3]);
+									System.out.println(diagnoseModel.getDiagnoseResult());					        		
+				                    int abNum = diagnoseModel.getAbnormalBeat();
+				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
+				        			RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), content);	
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}				        					        			
 			        		}
 						}
 						Thread.sleep(1000);
 					}
 				} catch(InterruptedException ex) {
 					System.out.println("自动心电诊断已终止");
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				} 
 			}
 		});
 		
