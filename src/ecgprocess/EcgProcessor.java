@@ -6,8 +6,6 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import dsp.filter.design.DCBlockDesigner;
-
 import dsp.filter.FIRFilter;
 import dsp.filter.IIRFilter;
 import dsp.filter.design.FIRDesigner;
@@ -37,7 +35,7 @@ public class EcgProcessor {
 		}
 		
 		// do filtering
-		IIRFilter dcBlocker = DCBlockDesigner.design(1, sampleRate);
+		//IIRFilter dcBlocker = DCBlockDesigner.design(1, sampleRate);
 		IIRFilter notch50 = designNotch(50, sampleRate);
 		FIRFilter lpFilter = designLpFilter(sampleRate);
 		List<Short> afterFilter = new ArrayList<Short>();
