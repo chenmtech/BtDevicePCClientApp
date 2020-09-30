@@ -10,12 +10,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class EcgDiagnoseModel {
+	private static final EcgDiagnoseModel instance = new EcgDiagnoseModel();
+	
 	private static final double NORMAL_THRESH = 0.1;
 	private List<List<Double>> predictList = new ArrayList<>();
 	private String errStr;
 	
-	public EcgDiagnoseModel() {
+	private EcgDiagnoseModel() {
 		
+	}
+	
+	public static EcgDiagnoseModel getInstance() {
+		return instance;
 	}
 	
 	public List<List<Double>> getPredictList() {

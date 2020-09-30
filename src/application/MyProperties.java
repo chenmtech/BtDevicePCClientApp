@@ -28,6 +28,7 @@ public class MyProperties {
 	public void save() throws IOException {
 		try(OutputStream output = new FileOutputStream(FILE_NAME)) {
 			properties.store(output, "kmsignal configuration");
+			output.flush();
 		}
 	}
 	

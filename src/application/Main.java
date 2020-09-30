@@ -74,6 +74,8 @@ public class Main extends Application implements IDbOperationCallback{
 			primaryStage.show();
 			
 			dbOperator  = new DbOperator(this);
+
+			properties = new MyProperties();
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -85,7 +87,8 @@ public class Main extends Application implements IDbOperationCallback{
 		ConnectionPoolFactory.closeConnectionPool();
 		if(thAutoProcess != null && thAutoProcess.isAlive()) {
 			thAutoProcess.interrupt();
-		}
+			thAutoProcess.join();
+		}		
 		super.stop();
 	}
 
@@ -162,12 +165,26 @@ public class Main extends Application implements IDbOperationCallback{
 			return;
 		}
 		
+		String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
+		
+		if(properties == null) {
+			System.out.println("properties is null.");
+			return;
+		}
+		
+		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
+        for(String str : args) {
+        	if(str == null || str.equals(""))
+        		return;
+        }
+		
 		thAutoProcess = new Thread(new Runnable() {
 			@Override
 			public void run() {
+				JSONObject json = null;
 				try {
 					while(true) {
-						JSONObject json = RecordDbUtil.downloadLastRequestRecord();
+						json = RecordDbUtil.downloadLastRequestRecord();
 						if(json != null) {
 							long createTime = json.getLong("createTime");
 							String devAddress = json.getString("devAddress");
@@ -186,34 +203,30 @@ public class Main extends Application implements IDbOperationCallback{
 				                EcgProcessor ecgProc = new EcgProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
-				                String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
-				        		File reviewFile = new File(reviewJsonFileName);
+				                File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
 				        			reviewWriter.print(ecgProc.getReviewResult().toString());
-				        		} catch (FileNotFoundException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-									continue;
-								}  
-				        		
-				        		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
-			                    EcgDiagnoseModel diagnoseModel = new EcgDiagnoseModel();
-				        		try {
-									diagnoseModel.process(args[0], args[1], args[2], args[3]);
+				        			reviewWriter.flush();
+					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
+					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
 									System.out.println(diagnoseModel.getDiagnoseResult());					        		
 				                    int abNum = diagnoseModel.getAbnormalBeat();
 				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
 				        			RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), content);	
-								} catch (IOException e) {
+				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-								}				        					        			
+									RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), "系统异常");
+								}
 			        		}
+			        		json = null;
 						}
 						Thread.sleep(1000);
 					}
 				} catch(InterruptedException ex) {
-					System.out.println("自动心电诊断已终止");
+					if(json != null)
+						System.out.println("正在处理:" + json.toString());
+					System.out.println("心电诊断被终止");
 				} 
 			}
 		});
@@ -430,7 +443,6 @@ public class Main extends Application implements IDbOperationCallback{
 	
 	private class ConfigureStage extends Stage{	
 		ConfigureStage() throws IOException {
-			properties = new MyProperties();
 			GridPane pane = new GridPane();
 			pane.setAlignment(Pos.TOP_LEFT);
 			pane.setPadding(new Insets(10,10,10,10));
