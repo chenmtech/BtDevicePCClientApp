@@ -184,7 +184,7 @@ public class Main extends Application implements IDbOperationCallback{
 				JSONObject json = null;
 				try {
 					while(true) {
-						json = RecordDbUtil.downloadLastRequestRecord();
+						json = RecordDbUtil.applyForDiagnose();
 						if(json != null) {
 							long createTime = json.getLong("createTime");
 							String devAddress = json.getString("devAddress");
@@ -212,11 +212,11 @@ public class Main extends Application implements IDbOperationCallback{
 									System.out.println(diagnoseModel.getDiagnoseResult());					        		
 				                    int abNum = diagnoseModel.getAbnormalBeat();
 				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
-				        			RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), content);	
+				        			RecordDbUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), content);	
 				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-									RecordDbUtil.uploadReport(createTime, devAddress, new Date().getTime(), "系统异常");
+									RecordDbUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), "系统异常");
 								}
 			        		}
 			        		json = null;
