@@ -351,20 +351,16 @@ public class Main extends Application implements IDbOperationCallback{
 	
 	@Override
 	public void onRecordBasicInfoListUpdated(JSONArray basicInfos) {
-		if(basicInfos == null) {
-			infoPane.setInfo("加载失败");
+		if(basicInfos == null || basicInfos.isEmpty()) {
+			infoPane.setInfo("没有记录可加载。");
 		} else {
-			if(basicInfos.length() == 0) {
-				infoPane.setInfo("没有记录可加载。");
-			} else {
-				infoPane.setInfo("找到" + basicInfos.length() + "条记录");
-				for(int i = 0; i < basicInfos.length(); i++) {
-					JSONObject json = (JSONObject) basicInfos.get(i);
-					recordPane.addRecord(json);
-					long createTime = json.getLong("createTime");
-					if(fromTime > createTime)
-						fromTime = createTime;
-				}
+			infoPane.setInfo("找到" + basicInfos.length() + "条记录");
+			for(int i = 0; i < basicInfos.length(); i++) {
+				JSONObject json = (JSONObject) basicInfos.get(i);
+				recordPane.addRecord(json);
+				long createTime = json.getLong("createTime");
+				if(fromTime > createTime)
+					fromTime = createTime;
 			}
 		}
 	}
