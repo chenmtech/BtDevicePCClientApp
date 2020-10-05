@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.dbUtil.DbUtil;
-import com.cmtech.web.dbUtil.RecordDbUtil;
+import com.cmtech.web.dbUtil.RecordWebUtil;
 
 import javafx.application.Platform;
 
@@ -51,7 +51,7 @@ public class DbOperator {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONArray basicInfoJsons = RecordDbUtil.downloadBasicInfo(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
+				JSONArray basicInfoJsons = RecordWebUtil.downloadBasicInfo(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
 				Platform.runLater(()->callback.onRecordBasicInfoListUpdated(basicInfoJsons));
 			}
 		});
@@ -68,7 +68,7 @@ public class DbOperator {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONObject json = RecordDbUtil.download(type, createTime, devAddress);
+				JSONObject json = RecordWebUtil.download(type, createTime, devAddress);
 				Platform.runLater(()->callback.onRecordDownloaded(json));
 			}
 		});

@@ -16,7 +16,7 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
-import com.cmtech.web.dbUtil.RecordDbUtil;
+import com.cmtech.web.dbUtil.RecordWebUtil;
 
 import ecgprocess.EcgDiagnoseModel;
 import ecgprocess.EcgProcessor;
@@ -184,7 +184,7 @@ public class Main extends Application implements IDbOperationCallback{
 				JSONObject json = null;
 				try {
 					while(true) {
-						json = RecordDbUtil.applyForDiagnose();
+						json = RecordWebUtil.applyForDiagnose();
 						if(json != null) {
 							long createTime = json.getLong("createTime");
 							String devAddress = json.getString("devAddress");
@@ -212,11 +212,11 @@ public class Main extends Application implements IDbOperationCallback{
 									System.out.println(diagnoseModel.getDiagnoseResult());					        		
 				                    int abNum = diagnoseModel.getAbnormalBeat();
 				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
-				        			RecordDbUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), content);	
+				        			RecordWebUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), content);	
 				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-									RecordDbUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), "系统异常");
+									RecordWebUtil.uploadDiagnoseResult(createTime, devAddress, new Date().getTime(), "系统异常");
 								}
 			        		}
 			        		json = null;
