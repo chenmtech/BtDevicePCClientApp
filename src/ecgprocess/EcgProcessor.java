@@ -134,11 +134,25 @@ public class EcgProcessor {
 	
 	private JSONObject getQrsPosAndRRInterval(List<Short> ecgData, int sampleRate) {
 		QrsDetectorWithQRSInfo detector = new QrsDetectorWithQRSInfo(sampleRate);
+		int n = 0;
+		for(Short datum : ecgData) {
+			detector.outputRRInterval((int)datum);
+			n++;
+			if(detector.firstPeakFound()) break;
+		}
 		for(Short datum : ecgData) {
 			detector.outputRRInterval((int)datum);
 		}
+		
 		List<Long> qrsPos = detector.getQrsPositions();
 		List<Integer> rrInterval = detector.getRrIntervals();
+		
+		qrsPos.remove(0);
+		rrInterval.remove(0);
+		for(int i = 0; i < qrsPos.size(); i++) {
+			qrsPos.set(i, qrsPos.get(i)-n);
+		}
+		
 		JSONObject json = new JSONObject();
 		json.put("QrsPos", qrsPos);
 		json.put("RRInterval", rrInterval);

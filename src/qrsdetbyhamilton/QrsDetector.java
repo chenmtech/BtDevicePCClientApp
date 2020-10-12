@@ -152,6 +152,10 @@ public class QrsDetector {
 		return RRInterval;
 	}
 	
+	public boolean firstPeakFound() {
+		return !firstPeak;
+	}
+	
 	// input one datum
 	// return the delay of the QRS wave position from the position of this datum if a QRS wave is detected, or 0
 	public int detectQrs( int datum )
