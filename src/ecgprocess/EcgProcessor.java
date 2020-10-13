@@ -44,9 +44,10 @@ public class EcgProcessor {
 		}		
 		
 		// do resampling
-		ResampleFrom250To360 resampler = new ResampleFrom250To360();
+		/*ResampleFrom250To360 resampler = new ResampleFrom250To360();
 		ecgData = resampler.resample(afterFilter);
-		sampleRate = resampler.getOutSampleRate();
+		sampleRate = resampler.getOutSampleRate();*/
+		ecgData = afterFilter;
 		
 		// detect the QRS waves and RR interval
 		JSONObject qrsAndRRInterval = getQrsPosAndRRInterval(ecgData, sampleRate);
@@ -74,6 +75,7 @@ public class EcgProcessor {
 		reviewResult.put("QrsPos", qrsAndRRInterval.get("QrsPos"));
 		reviewResult.put("EcgData", ecgData);
 		reviewResult.put("SegEcgData", segEcgData);
+		reviewResult.put("SampleRate", sampleRate);
 		System.out.println(reviewResult.toString());
 	}	
 	
@@ -150,7 +152,9 @@ public class EcgProcessor {
 		qrsPos.remove(0);
 		rrInterval.remove(0);
 		for(int i = 0; i < qrsPos.size(); i++) {
-			qrsPos.set(i, qrsPos.get(i)-n);
+			long p = qrsPos.get(i)-n;
+			if(p < 0) p = 0;
+			qrsPos.set(i, p);
 		}
 		
 		JSONObject json = new JSONObject();

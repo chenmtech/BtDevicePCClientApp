@@ -12,12 +12,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
 import com.cmtech.web.dbUtil.RecordWebUtil;
 
+import chlg2017.Chlg2017;
 import ecgprocess.EcgDiagnoseModel;
 import ecgprocess.EcgProcessor;
 import javafx.application.Application;
@@ -234,6 +236,11 @@ public class Main extends Application implements IDbOperationCallback{
 		thAutoProcess.start();
 	}
 	
+	public void challenge2017() {
+		Chlg2017 chlg2017 = new Chlg2017(infoPane);
+		chlg2017.processRecord();
+	}
+	
 	public void processRecord() {
 		if(!ACCOUNT.isLogin()) {
 			//login();
@@ -258,11 +265,18 @@ public class Main extends Application implements IDbOperationCallback{
                 	infoPane.setInfo("对不起，暂时只能处理心电信号。");
                 	return;
                 }
-                String ecgStr = json.getString("ecgData");
-                String[] ecgDataStr = ecgStr.split(",");
                 List<Short> ecgData = new ArrayList<>();
-                for(String str : ecgDataStr) {
-                	ecgData.add(Short.parseShort(str));
+                try {
+                	String ecgStr = json.getString("ecgData");
+                    String[] ecgDataStr = ecgStr.split(",");
+                    for(String str : ecgDataStr) {
+                    	ecgData.add(Short.parseShort(str));
+                    }
+                } catch (JSONException ex) {
+                	JSONArray arr = json.getJSONArray("ecgData");
+                	for(int i = 0; i < arr.length(); i++) {
+                		ecgData.add((short)arr.getInt(i));
+                	}
                 }
                 int sampleRate = json.getInt("sampleRate");
                 
@@ -278,13 +292,6 @@ public class Main extends Application implements IDbOperationCallback{
         		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
         			reviewWriter.print(ecgProc.getReviewResult().toString());
         		}
-        		
-        		// save the string of the segment data to txt file
-/*        		String txtFileName = tmpFileName + ".txt";
-        		File txtFile = new File(txtFileName);
-        		try(PrintWriter txtWriter = new PrintWriter(txtFile)) {
-        			txtWriter.print(ecgProc.getSegEcgDataString());
-        		}*/
         		
     			infoPane.setInfo("已将处理结果保存到文件中。");
         	} catch (IOException e) {

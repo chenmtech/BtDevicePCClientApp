@@ -36,7 +36,7 @@ public class RWaveDetecter {
 		for(Short d : ecgData) {
 			normData.add((float)d);
 		}
-		for(int i = 0; i < rrInterval.size()-1; i++) {
+		for(int i = 1; i < rrInterval.size()-1; i++) {
 			long qrs = qrsPos.get(i+1);
 			long qrsBegin = qrs - QRS_HALF_WIDTH;
 			long qrsEnd = qrs + QRS_HALF_WIDTH;
@@ -79,8 +79,8 @@ public class RWaveDetecter {
 				}
 			}
 			
-			long rBegin = rPos.get(i) - 5;
-			long rEnd = rPos.get(i) + 5;
+			long rBegin = rPos.get(i-1) - 5;
+			long rEnd = rPos.get(i-1) + 5;
 			List<Float> tmp = new ArrayList<>();
 			for(long j = rBegin; j <= rEnd; j++) {
 				tmp.add((float)Math.abs(ecgData.get((int)j)));
@@ -89,12 +89,12 @@ public class RWaveDetecter {
 			rlt = MathUtil.floatMax(tmp);
 			maxV = rlt.getValue();
 			maxI = rlt.getKey();
-			rPos.set(i, rBegin + maxI);			
+			rPos.set(i-1, rBegin + maxI);			
 		}	
 		
 		List<Long> beatBegin = new ArrayList<>();
-		for(int i = 0; i < rrInterval.size()-1; i++) {
-			beatBegin.add(rPos.get(i) - Math.round(rrInterval.get(i)*2.0/5));
+		for(int i = 1; i < rrInterval.size()-1; i++) {
+			beatBegin.add(rPos.get(i-1) - Math.round(rrInterval.get(i)*2.0/5));
 		}
 		JSONObject json = new JSONObject();
 		json.put("RPos", rPos);
