@@ -13,10 +13,13 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 
+import AFEvidence.MyAFEvidence;
 import application.InfoPane;
 
 public class Chlg2017 {
 	private final InfoPane infoPane;
+	
+	private final MyAFEvidence afEvi = new MyAFEvidence();
 	
 	public Chlg2017(InfoPane infoPane) {
 		this.infoPane = infoPane;
@@ -25,10 +28,10 @@ public class Chlg2017 {
 	public void processRecord() {
 		File file;
         String name = "";
-		for(int num = 101; num <= 1000; num++) {
+		for(int num = 54; num <= 54; num++) {
 			name = "0000" + num;
 			name = name.substring(name.length()-5);
-			name = "F:\\AFDetect\\A" + name + ".json";
+			name = "F:\\AFDetect\\origin\\A" + name + ".json";
 			System.out.println(name);
 			file = new File(name);
 			
@@ -56,8 +59,23 @@ public class Chlg2017 {
 	                
 	                Chlg2017EcgProcessor ecgProc = new Chlg2017EcgProcessor();
 	                ecgProc.process(ecgData, sampleRate);
+	                
+	                JSONArray RPos = (JSONArray) ecgProc.getReviewResult().get("RPos");
+	                List<Double> RR = new ArrayList<>();
+	                for(int i = 1; i < RPos.length(); i++) {
+	                	double R1 = RPos.getLong(i-1)*1000.0/sampleRate;
+	                	double R2 = RPos.getLong(i)*1000.0/sampleRate;
+	                	RR.add(R2-R1);
+	                	//double R3 = RPos.getLong(i+1)*1000.0/sampleRate;
+		                //afEvi.addPoint(R2-R1, R3-R2);
+	                }
+	                for(int i = 1; i < RR.size()-1; i++) {
+	                	afEvi.addPoint(RR.get(i)-RR.get(i-1), RR.get(i+1)-RR.get(i));
+	                }
+	                System.out.println(afEvi.getAFEvidence());
+	                afEvi.clear();
 	    			
-	        		String srcFileName = file.getAbsolutePath();
+	        		/*String srcFileName = file.getAbsolutePath();
 	        		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));
 	        		
 	        		// save review result to json file
@@ -65,7 +83,7 @@ public class Chlg2017 {
 	        		File reviewFile = new File(reviewJsonFileName);
 	        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
 	        			reviewWriter.print(ecgProc.getReviewResult().toString());
-	        		}
+	        		}*/
 	        		
 	    			infoPane.setInfo("已将处理结果保存到文件中。");
 	        	} catch (IOException e) {
@@ -74,6 +92,5 @@ public class Chlg2017 {
 				}
 	        }
 		}
-		
 	}
 }
