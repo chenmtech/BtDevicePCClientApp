@@ -1,5 +1,7 @@
 package AFEvidence;
 
+import java.util.List;
+
 public class MyAFEvidence {
 	private static int MIN_MS = -600;
 	private static int MAX_MS = 600;
@@ -14,12 +16,18 @@ public class MyAFEvidence {
 		
 	}
 	
+	public void process(List<Double> RR) {
+		 for(int i = 1; i < RR.size()-1; i++) {
+         	addPoint(RR.get(i)-RR.get(i-1), RR.get(i+1)-RR.get(i));
+         }
+	}
+	
 	public void clear() {
 		OriginCount = 0;
 		hist.clear();
 	}
 	
-	public void addPoint(double xMs, double yMs) {
+	private void addPoint(double xMs, double yMs) {
 		// 在原点，OriginCount计数
 		if(Math.abs(xMs) < 20 && Math.abs(yMs) < 20)
 			OriginCount++;

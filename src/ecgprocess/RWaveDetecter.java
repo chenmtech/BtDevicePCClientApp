@@ -1,11 +1,9 @@
 package ecgprocess;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import java.util.Map;
 import dsp.filter.FIRFilter;
 import dsp.filter.IDigitalFilter;
 import dsp.filter.structure.StructType;
@@ -18,17 +16,10 @@ public class RWaveDetecter {
 	private static final int QRS_WIDTH = QRS_WIDTH_MS*SAMPLE_RATE/1000;
 	private static final int QRS_HALF_WIDTH = QRS_WIDTH/2;
 	
-	public static JSONObject findRPosAndBeatBegin(List<Short> ecgData, JSONObject qrsAndRRInterval) {
-		List<Long> qrsPos = new ArrayList<>();
-		List<Integer> rrInterval = new ArrayList<>();
-		JSONArray array = (JSONArray)qrsAndRRInterval.get("QrsPos");
-		for(int i = 0; i < array.length(); i++) {
-			qrsPos.add(array.getLong(i));
-		}
-		array = (JSONArray)qrsAndRRInterval.get("RRInterval");
-		for(int i = 0; i < array.length(); i++) {
-			rrInterval.add(array.getInt(i));
-		}
+	@SuppressWarnings("unchecked")
+	public static Map<String, Object> findRPosAndBeatBegin(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
+		List<Long> qrsPos = (List<Long>) qrsAndRRInterval.get("QrsPos");
+		List<Integer> rrInterval = (List<Integer>) qrsAndRRInterval.get("RRInterval");
 		
 		List<Float> d2= diffFilter(ecgData);
 		List<Long> rPos = new ArrayList<>();
@@ -96,10 +87,11 @@ public class RWaveDetecter {
 		for(int i = 1; i < rrInterval.size()-1; i++) {
 			beatBegin.add(rPos.get(i-1) - Math.round(rrInterval.get(i)*2.0/5));
 		}
-		JSONObject json = new JSONObject();
-		json.put("RPos", rPos);
-		json.put("BeatBegin", beatBegin);
-		return json;
+		
+		Map<String, Object> map = new HashMap<>();
+		map.put("RPos", rPos);
+		map.put("BeatBegin", beatBegin);
+		return map;
 	}
 	
 	private static List<Float> diffFilter(List<Short> data) {

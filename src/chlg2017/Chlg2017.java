@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,18 +59,8 @@ public class Chlg2017 {
 	                Chlg2017EcgProcessor ecgProc = new Chlg2017EcgProcessor();
 	                ecgProc.process(ecgData, sampleRate);
 	                
-	                JSONArray RPos = (JSONArray) ecgProc.getReviewResult().get("RPos");
-	                List<Double> RR = new ArrayList<>();
-	                for(int i = 1; i < RPos.length(); i++) {
-	                	double R1 = RPos.getLong(i-1)*1000.0/sampleRate;
-	                	double R2 = RPos.getLong(i)*1000.0/sampleRate;
-	                	RR.add(R2-R1);
-	                	//double R3 = RPos.getLong(i+1)*1000.0/sampleRate;
-		                //afEvi.addPoint(R2-R1, R3-R2);
-	                }
-	                for(int i = 1; i < RR.size()-1; i++) {
-	                	afEvi.addPoint(RR.get(i)-RR.get(i-1), RR.get(i+1)-RR.get(i));
-	                }
+	                List<Double> RR = ecgProc.getRRIntervalInMs();
+	                afEvi.process(RR);
 	                System.out.println(afEvi.getAFEvidence());
 	                afEvi.clear();
 	    			

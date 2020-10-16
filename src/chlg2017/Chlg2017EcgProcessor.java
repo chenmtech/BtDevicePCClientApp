@@ -7,7 +7,6 @@ import ecgprocess.EcgProcessor;
 public class Chlg2017EcgProcessor extends EcgProcessor {
 	
 	public void process(List<Short> ecgData, int sampleRate) {
-		super.process(ecgData, sampleRate);
-		
+		super.process(ecgData, sampleRate);		
 	}
 }

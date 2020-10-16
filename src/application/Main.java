@@ -207,7 +207,7 @@ public class Main extends Application implements IDbOperationCallback{
 				                
 				                File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
-				        			reviewWriter.print(ecgProc.getReviewResult().toString());
+				        			reviewWriter.print(ecgProc.getResultJson().toString());
 				        			reviewWriter.flush();
 					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
 					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
@@ -290,7 +290,7 @@ public class Main extends Application implements IDbOperationCallback{
         		String reviewJsonFileName = tmpFileName + "-review.json";
         		File reviewFile = new File(reviewJsonFileName);
         		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
-        			reviewWriter.print(ecgProc.getReviewResult().toString());
+        			reviewWriter.print(ecgProc.getResultJson().toString());
         		}
         		
     			infoPane.setInfo("已将处理结果保存到文件中。");
