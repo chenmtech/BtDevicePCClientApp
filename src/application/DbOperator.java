@@ -51,7 +51,7 @@ public class DbOperator {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONArray basicInfoJsons = RecordWebUtil.downloadBasicInfo(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
+				JSONArray basicInfoJsons = RecordWebUtil.downloadList(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
 				Platform.runLater(()->callback.onRecordBasicInfoListUpdated(basicInfoJsons));
 			}
 		});
