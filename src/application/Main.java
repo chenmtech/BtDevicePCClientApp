@@ -116,40 +116,27 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
-	public void reload(RecordType type, String creator, long searchTime, String noteSearchStr) {
+	public void reload(RecordType type, int creatorId, long searchTime, String noteSearchStr) {
 		if(!ACCOUNT.isLogin()) {
 			login();
 			return;
 		}
 			
 		recordPane.clearContent();
-		String creatorPlat = "";
-		String creatorId = "";
-		if(!"".equals(creator)) {
-			creatorPlat = "PH";
-			creatorId = "86"+creator;
-		}
 		fromTime = searchTime;
 
 		int num = 20;
-		dbOperator.queryRecord(type, creatorPlat, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.queryRecord(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
-	public void loadNext(RecordType type, String creator, String noteSearchStr) {
+	public void loadNext(RecordType type, int creatorId, String noteSearchStr) {
 		if(!ACCOUNT.isLogin()) {
 			login();
 			return;
 		}
 		
-		String creatorPlat = "";
-		String creatorId = "";
-		if(!"".equals(creator)) {
-			creatorPlat = "PH";
-			creatorId = "86"+creator;
-		}
-		
 		int num = 20;
-		dbOperator.queryRecord(type, creatorPlat, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.queryRecord(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void saveRecord(RecordType type, long createTime, String devAddress) {

@@ -47,11 +47,11 @@ public class DbOperator {
 		}
 	}
 	
-	public void queryRecord(RecordType type, String creatorPlat, String creatorId, long fromTime, String noteSearchStr, int num) {
+	public void queryRecord(RecordType type, int creatorId, long fromTime, String noteSearchStr, int num) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONArray basicInfoJsons = RecordWebUtil.downloadList(type, creatorPlat, creatorId, fromTime, noteSearchStr, num);
+				JSONArray basicInfoJsons = RecordWebUtil.downloadList(type, creatorId, fromTime, noteSearchStr, num);
 				Platform.runLater(()->callback.onRecordBasicInfoListUpdated(basicInfoJsons));
 			}
 		});
