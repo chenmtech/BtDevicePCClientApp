@@ -61,9 +61,7 @@ public class RecordPane extends GridPane {
 		int recordTypeCode = json.getInt("recordTypeCode");
 		RecordType type = RecordType.fromCode(recordTypeCode);
 		String ver = json.getString("ver");
-		String creatorPlat = json.getString("creatorPlat");
-		String creatorId = json.getString("creatorId");
-		String creator = creatorPlat + creatorId.substring(0, creatorId.length()-6) + "******";
+		String creator = String.valueOf(json.getInt("creatorId"));
 		long createTime = json.getLong("createTime");
 		String devAddress = json.getString("devAddress");
 		String note = json.getString("note");

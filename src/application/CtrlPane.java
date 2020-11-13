@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import com.cmtech.web.btdevice.RecordType;
+import static com.cmtech.web.MyConstant.*;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -48,8 +49,8 @@ public class CtrlPane extends HBox{
 		Button btnLogin = new Button("登录");
 		Button btnReload = new Button("开始查询");
 		Button btnLoadNext = new Button("继续查询");
-		Button btnProcessSignal = new Button("处理ECG信号");
 		Button btnChlg2017 = new Button("房颤检测挑战");
+		Button btnProcessSignal = new Button("处理ECG信号");
 		Button btnDiagnose = new Button("诊断ECG信号");
 		Button btnAutoProcessDiagnoseRequest = new Button("自动处理诊断请求");
 		Button btnConfig = new Button("设置环境");
@@ -66,20 +67,24 @@ public class CtrlPane extends HBox{
 		btnReload.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				String creator = tfCreator.getText();
+				int creatorId = ("".equals(creator)) ? INVALID_ID : Integer.parseInt(creator);
 				LocalDate localDate = fromDate.getValue();
 				Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 				Calendar cal = Calendar.getInstance();  
 			    cal.setTime(date);
 			    cal.set(Calendar.HOUR_OF_DAY, 24);
 				long searchTime = cal.getTimeInMillis();
-				main.reload(cboType.getValue(), tfCreator.getText(), searchTime, tfNoteSearchStr.getText());
+				main.reload(cboType.getValue(), creatorId, searchTime, tfNoteSearchStr.getText());
 			}
 		});
 		
 		btnLoadNext.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				main.loadNext(cboType.getValue(), tfCreator.getText(), tfNoteSearchStr.getText());
+				String creator = tfCreator.getText();
+				int creatorId = ("".equals(creator)) ? INVALID_ID : Integer.parseInt(creator);
+				main.loadNext(cboType.getValue(), creatorId, tfNoteSearchStr.getText());
 			}
 		});
 		

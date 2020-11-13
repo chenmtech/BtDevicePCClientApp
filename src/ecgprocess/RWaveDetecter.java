@@ -1,14 +1,16 @@
 package ecgprocess;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import dsp.filter.FIRFilter;
 import dsp.filter.IDigitalFilter;
 import dsp.filter.structure.StructType;
-import javafx.util.Pair;
 import util.MathUtil;
+import util.Pair;
 
 public class RWaveDetecter {
 	private static final int QRS_WIDTH_MS = 300; // unit:ms
@@ -17,7 +19,7 @@ public class RWaveDetecter {
 	private static final int QRS_HALF_WIDTH = QRS_WIDTH/2;
 	
 	@SuppressWarnings("unchecked")
-	public static Map<String, Object> findRPosAndBeatBegin(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
+	public static Map<String, Object> findRWaveAndBeatBeginPos(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
 		List<Long> qrsPos = (List<Long>) qrsAndRRInterval.get("QrsPos");
 		List<Integer> rrInterval = (List<Integer>) qrsAndRRInterval.get("RRInterval");
 		
@@ -45,23 +47,23 @@ public class RWaveDetecter {
 			}
 			
 			Pair<Integer, Float> rlt = MathUtil.floatMin(normData.subList((int)qrsBegin, (int)qrsEnd));
-			float minV = rlt.getValue();
-			int minI = rlt.getKey();
+			float minV = rlt.second;
+			int minI = rlt.first;
 			
 			rlt = MathUtil.floatMax(normData.subList((int)qrsBegin, (int)qrsEnd));
-			float maxV = rlt.getValue();
-			int maxI = rlt.getKey();
+			float maxV = rlt.second;
+			int maxI = rlt.first;
 			
 			if(Math.abs(maxV) > 2*Math.abs(minV)/3) {
 				rPos.add(qrsBegin + maxI);
 			} else {
 				rlt = MathUtil.floatMin(d2.subList((int)qrsBegin, (int)qrsEnd));
-				minV = rlt.getValue();
-				minI = rlt.getKey();
+				minV = rlt.second;
+				minI = rlt.first;
 				
 				rlt = MathUtil.floatMax(d2.subList((int)qrsBegin, (int)qrsEnd));
-				maxV = rlt.getValue();
-				maxI = rlt.getKey();
+				maxV = rlt.second;
+				maxI = rlt.first;
 				
 				if(Math.abs(maxV) > Math.abs(minV)) {
 					rPos.add(qrsBegin + maxI - 2);
@@ -78,8 +80,8 @@ public class RWaveDetecter {
 			}
 			
 			rlt = MathUtil.floatMax(tmp);
-			maxV = rlt.getValue();
-			maxI = rlt.getKey();
+			maxV = rlt.second;
+			maxI = rlt.first;
 			rPos.set(i-1, rBegin + maxI);			
 		}	
 		
@@ -87,6 +89,11 @@ public class RWaveDetecter {
 		for(int i = 1; i < rrInterval.size()-1; i++) {
 			beatBegin.add(rPos.get(i-1) - Math.round(rrInterval.get(i)*2.0/5));
 		}
+
+		if(beatBegin.get(0) < 0) {
+            beatBegin.remove(0);
+            rPos.remove(0);
+        }
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("RPos", rPos);
@@ -107,3 +114,4 @@ public class RWaveDetecter {
 		return d2Data;
 	}
 }
+

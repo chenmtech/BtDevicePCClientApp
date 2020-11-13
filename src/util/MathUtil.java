@@ -2,64 +2,74 @@ package util;
 
 import java.util.List;
 
-import javafx.util.Pair;
+import util.Pair;
 
 public class MathUtil {
 	private MathUtil() {
 		
 	}
-	
-	 //均值
-	 public static float floatAve(List<Float> x) { 
-		 int m = x.size();
-		 float sum = 0;
-		  for(Float d : x) {
-			  sum += d;
-		  }
-		 return sum/m; 
-	 }
-	
-	 //标准差σ=sqrt(s^2)
-	 public static float floatStd(List<Float> x) { 
-		  int m = x.size();
-		  float sum = 0;
-		  for(Float d : x) {
-			  sum += d;
-		  }
-		  double dAve = sum/m;//求平均值
-		  double dVar = 0;
-		  for(Float d : x) {
-			  dVar += (d-dAve)*(d-dAve);
-		  }
-		  return (float)Math.sqrt(dVar/(m-1));    
-	 }
-	 
-	 //均值
-	 public static float shortAve(List<Short> x) { 
-		  int m = x.size();
-		  float sum = 0;
-		  for(Short d : x) {
-			  sum += d;
-		  }
-		  return sum/m; 
-	 }
-	
-	 //标准差σ=sqrt(s^2)
-	 public static float shortStd(List<Short> x) { 
-		  int m=x.size();
-		  float sum=0;
-		  for(Short d : x) {
-			  sum += d;
-		  }
-		  double dAve = sum/m;//求平均值
-		  double dVar = 0;
 
-		  for(Short d : x) {
-			  dVar += (d-dAve)*(d-dAve);
-		  }
-		  
-		  return (float)Math.sqrt(dVar/(m-1));    
-	 }
+    //均值
+    public static double doubleAve(List<Double> x) {
+        int m = x.size();
+        double sum = 0;
+        for(Double d : x) {
+            sum += d;
+        }
+        return sum/m;
+    }
+	
+    //均值
+    public static float floatAve(List<Float> x) {
+        int m = x.size();
+        float sum = 0;
+        for(Float d : x) {
+            sum += d;
+        }
+        return sum/m;
+    }
+
+    //short均值,返回float
+    public static float shortAve(List<Short> x) {
+        int m = x.size();
+        float sum = 0;
+        for(Short d : x) {
+            sum += d;
+        }
+        return sum/m;
+    }
+	
+    //标准差σ=sqrt(s^2)
+    public static float floatStd(List<Float> x) {
+        float ave = floatAve(x);//求平均值
+        float var = 0;
+        for(Float d : x) {
+            var += (d-ave)*(d-ave);
+        }
+        return (float)Math.sqrt(var/(x.size()-1));
+    }
+
+    //标准差σ=sqrt(s^2)
+    public static double doubleStd(List<Double> x) {
+        double ave = doubleAve(x);//求平均值
+        double var = 0;
+        for(double d : x) {
+            var += (d-ave)*(d-ave);
+        }
+        return Math.sqrt(var/(x.size()-1));
+    }
+	
+    //标准差σ=sqrt(s^2)
+    public static float shortStd(List<Short> x) {
+	    float ave = shortAve(x);
+        float var = 0;
+
+        for(Short d : x) {
+            var += (d-ave)*(d-ave);
+        }
+
+        return (float)Math.sqrt(var/(x.size()-1));
+    }
 	 
 	 public static Pair<Integer, Float> floatMin(List<Float> x) {
 		 float minV = Float.MAX_VALUE;
@@ -70,7 +80,7 @@ public class MathUtil {
 				 minI = i;
 			 }
 		 }
-		 return new Pair<Integer, Float>(minI, minV);
+		 return new Pair<>(minI, minV);
 	 }
 	 
 	 public static Pair<Integer, Float> floatMax(List<Float> x) {
@@ -82,7 +92,7 @@ public class MathUtil {
 				 maxI = i;
 			 }
 		 }
-		 return new Pair<Integer, Float>(maxI, maxV);
+		 return new Pair<>(maxI, maxV);
 	 }
 
 }

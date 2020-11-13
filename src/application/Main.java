@@ -21,7 +21,7 @@ import com.cmtech.web.dbUtil.RecordWebUtil;
 
 import chlg2017.Chlg2017;
 import ecgprocess.EcgDiagnoseModel;
-import ecgprocess.EcgProcessor;
+import ecgprocess.EcgPreProcessor;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -189,7 +189,7 @@ public class Main extends Application implements IDbOperationCallback{
 				                }
 				                int sampleRate = json.getInt("sampleRate");
 				                
-				                EcgProcessor ecgProc = new EcgProcessor();
+				                EcgPreProcessor ecgProc = new EcgPreProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
 				                File reviewFile = new File(reviewJsonFileName);
@@ -267,7 +267,7 @@ public class Main extends Application implements IDbOperationCallback{
                 }
                 int sampleRate = json.getInt("sampleRate");
                 
-                EcgProcessor ecgProc = new EcgProcessor();
+                EcgPreProcessor ecgProc = new EcgPreProcessor();
                 ecgProc.process(ecgData, sampleRate);
     			
         		String srcFileName = file.getAbsolutePath();

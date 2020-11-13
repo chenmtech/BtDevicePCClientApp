@@ -40,7 +40,7 @@ public class QrsDetectorWithQRSInfo extends QrsDetector {
 		return qrsPositions;
 	}
 
-	public List<Integer> getRrIntervals() {
+	public List<Integer> getRRIntervals() {
 		return rrIntervals;
 	}
 	
