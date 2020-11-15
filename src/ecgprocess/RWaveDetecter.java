@@ -13,76 +13,81 @@ import util.MathUtil;
 import util.Pair;
 
 public class RWaveDetecter {
-	private static final int QRS_WIDTH_MS = 300; // unit:ms
-	private static final int SAMPLE_RATE = 360; // sample rate
-	private static final int QRS_WIDTH = QRS_WIDTH_MS*SAMPLE_RATE/1000;
-	private static final int QRS_HALF_WIDTH = QRS_WIDTH/2;
+	private static final int QRS_WIDTH_MS = 300; // QRS波宽度，unit:毫秒
 	
 	@SuppressWarnings("unchecked")
-	public static Map<String, Object> findRWaveAndBeatBeginPos(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
+	public static Map<String, Object> findRWaveAndBeatBeginPos(List<Short> ecgData, Map<String, Object> qrsAndRRInterval, int sampleRate) {
+		int halfQrsWidth = QRS_WIDTH_MS*sampleRate/1000/2; // QRS波一半宽度点数
+		
 		List<Long> qrsPos = (List<Long>) qrsAndRRInterval.get("QrsPos");
 		List<Integer> rrInterval = (List<Integer>) qrsAndRRInterval.get("RRInterval");
 		
-		List<Float> d2= diffFilter(ecgData);
+		List<Float> delta2= diffFilter(ecgData); // 二阶差分
 		List<Long> rPos = new ArrayList<>();
-		List<Float> normData = new ArrayList<>();
-		for(Short d : ecgData) {
-			normData.add((float)d);
-		}
-		for(int i = 1; i < rrInterval.size()-1; i++) {
+		List<Float> segNormData = new ArrayList<>();
+		List<Float> segDelta2 = new ArrayList<>();
+		
+		for(int i = 0; i < rrInterval.size()-1; i++) {
 			long qrs = qrsPos.get(i+1);
-			long qrsBegin = qrs - QRS_HALF_WIDTH;
-			long qrsEnd = qrs + QRS_HALF_WIDTH;
-			long beatBegin = qrs - Math.round(rrInterval.get(i)*2.0/5);
-			long beatEnd = qrs + Math.round(rrInterval.get(i+1)*3.0/5);
+			long tmp = qrs - Math.round(rrInterval.get(i)*2.0/5);
+			long beatBegin = (tmp > 0) ? tmp : 0;
+			tmp = qrs + Math.round(rrInterval.get(i+1)*3.0/5);
+			long beatEnd = (tmp < ecgData.size()) ? tmp : ecgData.size()-1;
 			
-			List<Short> temp = ecgData.subList((int)beatBegin, (int)beatEnd);
-			float ave = MathUtil.shortAve(temp);
-			float std = MathUtil.shortStd(temp);
-			
-			long ii = beatBegin;
-			for(Short d : temp) {
-				normData.set((int) ii, (d - ave)/std);
-				ii++;
+			for(long i1 = beatBegin; i1 < beatEnd; i1++) {
+				segNormData.add((float)ecgData.get((int)i1));
+				segDelta2.add(delta2.get((int)i1));
 			}
+			long qrsSegPos = qrs-beatBegin;
+			tmp = qrsSegPos-halfQrsWidth;
+			long qrsBegin = (tmp > 0) ? tmp : 0;
+			tmp = qrsSegPos + halfQrsWidth;
+			long qrsEnd = (tmp < segNormData.size()) ? tmp : segNormData.size()-1;
 			
-			Pair<Integer, Float> rlt = MathUtil.floatMin(normData.subList((int)qrsBegin, (int)qrsEnd));
+			//List<Short> temp = ecgData.subList((int)beatBegin, (int)beatEnd);
+			float ave = MathUtil.floatAve(segNormData);
+			float std = MathUtil.floatStd(segNormData);	
+			
+			Pair<Integer, Float> rlt = MathUtil.floatMin(segNormData.subList((int)qrsBegin, (int)qrsEnd));
 			float minV = rlt.second;
 			int minI = rlt.first;
 			
-			rlt = MathUtil.floatMax(normData.subList((int)qrsBegin, (int)qrsEnd));
+			rlt = MathUtil.floatMax(segNormData.subList((int)qrsBegin, (int)qrsEnd));
 			float maxV = rlt.second;
 			int maxI = rlt.first;
 			
 			if(Math.abs(maxV) > 2*Math.abs(minV)/3) {
-				rPos.add(qrsBegin + maxI);
+				rPos.add(qrs + maxI);
 			} else {
-				rlt = MathUtil.floatMin(d2.subList((int)qrsBegin, (int)qrsEnd));
+				rlt = MathUtil.floatMin(delta2.subList((int)qrsBegin, (int)qrsEnd));
 				minV = rlt.second;
 				minI = rlt.first;
 				
-				rlt = MathUtil.floatMax(d2.subList((int)qrsBegin, (int)qrsEnd));
+				rlt = MathUtil.floatMax(delta2.subList((int)qrsBegin, (int)qrsEnd));
 				maxV = rlt.second;
 				maxI = rlt.first;
 				
 				if(Math.abs(maxV) > Math.abs(minV)) {
-					rPos.add(qrsBegin + maxI - 2);
+					rPos.add(qrs + maxI);
 				} else {
-					rPos.add(qrsBegin + minI - 2);
+					rPos.add(qrs + minI);
 				}
 			}
 			
 			long rBegin = rPos.get(i-1) - 5;
 			long rEnd = rPos.get(i-1) + 5;
-			List<Float> tmp = new ArrayList<>();
+			List<Float> tmpList = new ArrayList<>();
 			for(long j = rBegin; j <= rEnd; j++) {
-				tmp.add((float)Math.abs(ecgData.get((int)j)));
+				tmpList.add((float)Math.abs(ecgData.get((int)j)));
 			}
 			
-			rlt = MathUtil.floatMax(tmp);
+			rlt = MathUtil.floatMax(tmpList);
 			maxV = rlt.second;
 			maxI = rlt.first;
 			rPos.set(i-1, rBegin + maxI);			
+			
+			segNormData.clear();
+			segDelta2.clear();
 		}	
 		
 		List<Long> beatBegin = new ArrayList<>();
@@ -110,6 +115,13 @@ public class RWaveDetecter {
 		for(Short d : data) {
 			d2Data.add((float)diffFilter.filter(d));
 		}
+		
+		// 考虑滤波产生2个数的移位，矫正它
+		d2Data.remove(0);
+		d2Data.remove(0);
+		float tmp = d2Data.get(d2Data.size()-1);
+		d2Data.add(tmp);
+		d2Data.add(tmp);
 		
 		return d2Data;
 	}

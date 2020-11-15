@@ -5,7 +5,7 @@ import java.util.List;
 
 public class QrsDetectorWithQRSInfo extends QrsDetector {
 	private List<Long> qrsPositions = new ArrayList<>();
-	private List<Integer> rrIntervals = new ArrayList<>();
+	//private List<Integer> rrIntervals = new ArrayList<>();
 	
 	public QrsDetectorWithQRSInfo(int sampleRate) {
 		super(sampleRate);
@@ -26,7 +26,7 @@ public class QrsDetectorWithQRSInfo extends QrsDetector {
 				//System.out.println(""+delay);
 			} else {
 				RRInterval = RRCount-delay+1;
-				rrIntervals.add(RRInterval);
+				//rrIntervals.add(RRInterval);
 				qrsPositions.add(qrsPositions.get(qrsPositions.size()-1) + RRInterval);
 			}
 			RRCount = delay;
@@ -38,10 +38,6 @@ public class QrsDetectorWithQRSInfo extends QrsDetector {
 
 	public List<Long> getQrsPositions() {
 		return qrsPositions;
-	}
-
-	public List<Integer> getRRIntervals() {
-		return rrIntervals;
 	}
 	
 	

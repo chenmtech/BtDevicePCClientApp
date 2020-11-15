@@ -21,6 +21,7 @@ import util.MathUtil;
 public class EcgPreProcessor {
 	private static final int NUM_BEFORE_R = 99;
 	private static final int NUM_AFTER_R = 150;
+	private static final int MIN_QRS_NUM = 6;
 	
 	private static final int INVALID_HR = 0;
 
@@ -185,30 +186,31 @@ public class EcgPreProcessor {
 		for(Short datum : ecgData) {
 			qrsDetector.outputRRInterval((int)datum);
 		}
-		
 		List<Long> qrsPos = qrsDetector.getQrsPositions();
-		List<Integer> rrInterval = qrsDetector.getRRIntervals();
-
-		if(qrsPos.size() < 6)
+		if(qrsPos.size() < MIN_QRS_NUM) // 波形太少了
 		    return null;
-
+		// 减掉n
 		qrsPos.remove(0);
-		rrInterval.remove(0);
 		for(int i = 0; i < qrsPos.size(); i++) {
 			long p = qrsPos.get(i)-n;
 			if(p < 0) p = 0;
 			qrsPos.set(i, p);
-		}
+		}		
+		
+		List<Integer> rrInterval = new ArrayList<>();
+		for(int i = 0; i < qrsPos.size()-1; i++) {
+			rrInterval.add((int) (qrsPos.get(i+1)-qrsPos.get(i)));
+		}		
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("QrsPos", qrsPos);
-		map.put("RRInterval", rrInterval);		
+		map.put("RRInterval", rrInterval);
 		
 		return map;
 	}
 	
-	private static Map<String, Object> getRWaveAndBeatBeginPos(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
-		return RWaveDetecter.findRWaveAndBeatBeginPos(ecgData, qrsAndRRInterval);
+	private Map<String, Object> getRWaveAndBeatBeginPos(List<Short> ecgData, Map<String, Object> qrsAndRRInterval) {
+		return RWaveDetecter.findRWaveAndBeatBeginPos(ecgData, qrsAndRRInterval, sampleRate);
 	}
 	
 	private static List<Float> normalizeEcgData(List<Short> ecgData, List<Long> beatBeginPos) {
