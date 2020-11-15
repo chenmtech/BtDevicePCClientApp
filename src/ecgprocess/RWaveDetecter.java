@@ -21,60 +21,68 @@ public class RWaveDetecter {
 		
 		List<Long> qrsPos = (List<Long>) qrsAndRRInterval.get("QrsPos");
 		List<Integer> rrInterval = (List<Integer>) qrsAndRRInterval.get("RRInterval");
+		List<Float> delta2= diffFilter(ecgData); // 信号二阶差分
 		
-		List<Float> delta2= diffFilter(ecgData); // 二阶差分
-		List<Long> rPos = new ArrayList<>();
-		List<Float> segNormData = new ArrayList<>();
-		List<Float> segDelta2 = new ArrayList<>();
+		List<Long> rPos = new ArrayList<>(); 
+		//List<Float> segBeat = new ArrayList<>(); // 一次心跳的数据
+		//List<Float> segQrsDelta2 = new ArrayList<>(); // 一次QRS波二阶差分数据
 		
-		for(int i = 0; i < rrInterval.size()-1; i++) {
-			long qrs = qrsPos.get(i+1);
-			long tmp = qrs - Math.round(rrInterval.get(i)*2.0/5);
-			long beatBegin = (tmp > 0) ? tmp : 0;
-			tmp = qrs + Math.round(rrInterval.get(i+1)*3.0/5);
-			long beatEnd = (tmp < ecgData.size()) ? tmp : ecgData.size()-1;
+		for(int i = 1; i < qrsPos.size()-1; i++) {
+			long qrs = qrsPos.get(i);
 			
-			for(long i1 = beatBegin; i1 < beatEnd; i1++) {
-				segNormData.add((float)ecgData.get((int)i1));
-				segDelta2.add(delta2.get((int)i1));
+			long beatBegin = qrs - Math.round(rrInterval.get(i-1)*2.0/5);
+			long qrsBegin = qrs-halfQrsWidth;
+			long minTmp = Math.min(beatBegin, qrsBegin);
+			if(minTmp < 0) continue;
+			beatBegin = minTmp;
+			
+			long beatEnd = qrs + Math.round(rrInterval.get(i)*3.0/5);
+			long qrsEnd = qrs + halfQrsWidth;
+			long maxTmp = Math.max(beatEnd, qrsEnd);
+			if(maxTmp >= ecgData.size()) continue;
+			beatEnd = maxTmp;
+			
+			List<Float> beat = new ArrayList<>(); // 一次心跳的数据
+			for(Short d : ecgData.subList((int)beatBegin, (int)beatEnd)) {
+				beat.add((float)d);
 			}
-			long qrsSegPos = qrs-beatBegin;
-			tmp = qrsSegPos-halfQrsWidth;
-			long qrsBegin = (tmp > 0) ? tmp : 0;
-			tmp = qrsSegPos + halfQrsWidth;
-			long qrsEnd = (tmp < segNormData.size()) ? tmp : segNormData.size()-1;
 			
-			//List<Short> temp = ecgData.subList((int)beatBegin, (int)beatEnd);
-			float ave = MathUtil.floatAve(segNormData);
-			float std = MathUtil.floatStd(segNormData);	
+			float ave = MathUtil.floatAve(beat);
+			float std = MathUtil.floatStd(beat);
 			
-			Pair<Integer, Float> rlt = MathUtil.floatMin(segNormData.subList((int)qrsBegin, (int)qrsEnd));
+			for(int i1 = 0; i1 < beat.size(); i1++) {
+				beat.set(i1, (beat.get(i1)-ave)/std);
+			}
+			
+			Pair<Integer, Float> rlt = MathUtil.floatMin(beat);
 			float minV = rlt.second;
 			int minI = rlt.first;
 			
-			rlt = MathUtil.floatMax(segNormData.subList((int)qrsBegin, (int)qrsEnd));
+			rlt = MathUtil.floatMax(beat);
 			float maxV = rlt.second;
 			int maxI = rlt.first;
 			
 			if(Math.abs(maxV) > 2*Math.abs(minV)/3) {
-				rPos.add(qrs + maxI);
-			} else {
-				rlt = MathUtil.floatMin(delta2.subList((int)qrsBegin, (int)qrsEnd));
+				rPos.add(beatBegin + maxI);
+			} else {				
+				List<Float> qrsDelta2 = delta2.subList((int)qrsBegin, (int)qrsEnd); // 一次QRS波的二阶差分数据
+				
+				rlt = MathUtil.floatMin(qrsDelta2);
 				minV = rlt.second;
 				minI = rlt.first;
 				
-				rlt = MathUtil.floatMax(delta2.subList((int)qrsBegin, (int)qrsEnd));
+				rlt = MathUtil.floatMax(qrsDelta2);
 				maxV = rlt.second;
 				maxI = rlt.first;
 				
 				if(Math.abs(maxV) > Math.abs(minV)) {
-					rPos.add(qrs + maxI);
+					rPos.add(qrsBegin + maxI);
 				} else {
-					rPos.add(qrs + minI);
+					rPos.add(qrsBegin + minI);
 				}
 			}
 			
-			long rBegin = rPos.get(i-1) - 5;
+/*			long rBegin = rPos.get(i-1) - 5;
 			long rEnd = rPos.get(i-1) + 5;
 			List<Float> tmpList = new ArrayList<>();
 			for(long j = rBegin; j <= rEnd; j++) {
@@ -84,21 +92,18 @@ public class RWaveDetecter {
 			rlt = MathUtil.floatMax(tmpList);
 			maxV = rlt.second;
 			maxI = rlt.first;
-			rPos.set(i-1, rBegin + maxI);			
-			
-			segNormData.clear();
-			segDelta2.clear();
+			rPos.set(i-1, rBegin + maxI);*/
 		}	
 		
-		List<Long> beatBegin = new ArrayList<>();
-		for(int i = 1; i < rrInterval.size()-1; i++) {
-			beatBegin.add(rPos.get(i-1) - Math.round(rrInterval.get(i)*2.0/5));
+		List<Integer> newRRInterval = new ArrayList<>();
+		for(int i = 1; i < rPos.size(); i++) {
+			newRRInterval.add((int)(rPos.get(i)-rPos.get(i-1)));
 		}
 
-		if(beatBegin.get(0) < 0) {
-            beatBegin.remove(0);
-            rPos.remove(0);
-        }
+		List<Long> beatBegin = new ArrayList<>();
+		for(int i = 1; i < rPos.size(); i++) {
+			beatBegin.add(rPos.get(i) - Math.round(newRRInterval.get(i-1)*2.0/5));
+		}
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("RPos", rPos);
