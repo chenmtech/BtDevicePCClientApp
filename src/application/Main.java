@@ -224,8 +224,11 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	public void AFDetect() {
-		AFDetectExecutor chlg2017 = new AFDetectExecutor(infoPane);
-		chlg2017.processRecord();
+		FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+        File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
+        
+		AFDetectExecutor afExec = new AFDetectExecutor(infoPane);
+		afExec.processRecord(file);
 	}
 	
 	public void processRecord() {
