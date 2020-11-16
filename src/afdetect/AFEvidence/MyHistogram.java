@@ -1,7 +1,7 @@
-package AFEvidence;
+package afdetect.AFEvidence;
 
 public class MyHistogram {
-	private MySeg[] segs = new MySeg[13];
+	private final MySeg[] segs = new MySeg[13];
 	
 	public MyHistogram() {
 		createSegs();

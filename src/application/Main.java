@@ -19,7 +19,7 @@ import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
 import com.cmtech.web.dbUtil.RecordWebUtil;
 
-import chlg2017.Chlg2017;
+import afdetect.AFDetectExecutor;
 import ecgprocess.EcgDiagnoseModel;
 import ecgprocess.EcgPreProcessor;
 import javafx.application.Application;
@@ -223,8 +223,8 @@ public class Main extends Application implements IDbOperationCallback{
 		thAutoProcess.start();
 	}
 	
-	public void challenge2017() {
-		Chlg2017 chlg2017 = new Chlg2017(infoPane);
+	public void AFDetect() {
+		AFDetectExecutor chlg2017 = new AFDetectExecutor(infoPane);
 		chlg2017.processRecord();
 	}
 	

@@ -1,4 +1,4 @@
-package chlg2017;
+package afdetect;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,15 +12,15 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 
-import AFEvidence.MyAFEvidence;
+import afdetect.AFEvidence.MyAFEvidence;
 import application.InfoPane;
 
-public class Chlg2017 {
+public class AFDetectExecutor {
 	private final InfoPane infoPane;
 	
-	private final MyAFEvidence afEvi = new MyAFEvidence();
+	//private final MyAFEvidence afEvi = new MyAFEvidence();
 	
-	public Chlg2017(InfoPane infoPane) {
+	public AFDetectExecutor(InfoPane infoPane) {
 		this.infoPane = infoPane;
 	}
 	
@@ -56,13 +56,13 @@ public class Chlg2017 {
 	            	}
 	                int sampleRate = json.getInt("sampleRate");
 	                
-	                Chlg2017EcgProcessor ecgProc = new Chlg2017EcgProcessor();
+	                AFDetectEcgPreProcessor ecgProc = new AFDetectEcgPreProcessor();
 	                ecgProc.process(ecgData, sampleRate);
 	                
 	                List<Double> RR = ecgProc.getRRIntervalInMs();
+	                MyAFEvidence afEvi = new MyAFEvidence();
 	                afEvi.process(RR);
 	                System.out.println(afEvi.getAFEvidence());
-	                afEvi.clear();
 	    			
 	        		/*String srcFileName = file.getAbsolutePath();
 	        		String tmpFileName = srcFileName.substring(0, srcFileName.lastIndexOf('.'));

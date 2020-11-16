@@ -1,4 +1,4 @@
-package AFEvidence;
+package afdetect.AFEvidence;
 
 
 public class MyBin {
