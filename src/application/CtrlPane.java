@@ -28,7 +28,7 @@ public class CtrlPane extends HBox{
 		
 		getChildren().add(new Label("记录类型："));
 		ComboBox<RecordType> cboType = new ComboBox<>();
-		cboType.getItems().addAll(RecordType.ALL, RecordType.ECG, RecordType.HR, RecordType.THERMO, RecordType.EEG);
+		cboType.getItems().addAll(RecordType.ALL, RecordType.ECG, RecordType.HR, RecordType.THERMO, RecordType.EEG, RecordType.PPG, RecordType.PTT);
 		cboType.setValue(cboType.getItems().get(0));
 		getChildren().add(cboType);
 		
