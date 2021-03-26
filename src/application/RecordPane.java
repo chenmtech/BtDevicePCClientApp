@@ -17,13 +17,12 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.TextAlignment;
 
 public class RecordPane extends GridPane {
 	//private static final Node[] HEADER;
-	private static final String[] HEADER_TITLES = {"记录类型", "版本号", "创建者账户", "创建时间", "设备地址", "记录时长", "备注", "操作"};
+	private static final String[] HEADER_TITLES = {"记录类型", "版本号", "创建者ID", "创建时间", "设备地址", "记录时长", "备注", "操作"};
 	private final List<JSONObject> recordJsons = new ArrayList<>();
 	private final Main main;
 	
@@ -70,6 +69,37 @@ public class RecordPane extends GridPane {
 			int recordSecond = json.getInt("recordSecond");
 			recordSecondStr = secondToTime(recordSecond);
 		}
+		
+		List<Node> nodes = new ArrayList<>();
+		nodes.add(new Label(type.getName()));
+		
+		nodes.add(new Label(ver));
+		
+		Button btnCreator = new Button(creator);
+		btnCreator.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				int creatorId = Integer.parseInt(creator);
+				main.getAccountInfo(creatorId);
+			}
+		});
+		nodes.add(btnCreator);
+		
+		DateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		String dateStr = dateFmt.format(new Date(createTime)) + '\n' + createTime;
+		nodes.add(new Label(dateStr));
+		
+		nodes.add(new Label(devAddress));
+		
+		nodes.add(new Label(recordSecondStr));
+		
+		TextArea taNote = new TextArea(note);
+		taNote.setEditable(false);
+		taNote.setWrapText(true);
+		taNote.prefWidthProperty().bind(widthProperty().divide(4));
+		taNote.setMaxHeight(40);
+		nodes.add(taNote);
+
 		Button btnGet = new Button("导出记录");
 		btnGet.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -77,24 +107,8 @@ public class RecordPane extends GridPane {
 				main.saveRecord(type, createTime, devAddress);
 			}
 		});
-		List<Node> nodes = new ArrayList<>();
-		nodes.add(new Label(type.getName()));
-		nodes.add(new Label(ver));
-		TextField tfCreator = new TextField(creator);
-		tfCreator.setEditable(false);
-		nodes.add(tfCreator);
-		DateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-		String dateStr = dateFmt.format(new Date(createTime)) + '\n' + createTime;
-		nodes.add(new Label(dateStr));
-		nodes.add(new Label(devAddress));
-		nodes.add(new Label(recordSecondStr));
-		TextArea taNote = new TextArea(note);
-		taNote.setEditable(false);
-		taNote.setWrapText(true);
-		taNote.prefWidthProperty().bind(widthProperty().divide(4));
-		taNote.setMaxHeight(40);
-		nodes.add(taNote);
 		nodes.add(btnGet);
+		
 		addRow(recordJsons.size(), nodes.toArray(new Node[0]));
 	}
 	

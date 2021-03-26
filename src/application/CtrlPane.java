@@ -54,9 +54,12 @@ public class CtrlPane extends HBox{
 		Button btnDiagnose = new Button("诊断ECG信号");
 		Button btnAutoProcessDiagnoseRequest = new Button("自动处理诊断请求");
 		Button btnConfig = new Button("设置环境");
-		getChildren().addAll(btnLogin, btnReload, btnLoadNext, 
-				btnAFDetect, btnProcessSignal, btnDiagnose, btnAutoProcessDiagnoseRequest, btnConfig);
+		getChildren().addAll(btnLogin, btnReload, btnLoadNext);
 		
+		//getChildren().addAll(btnLogin, btnReload, btnLoadNext, 
+		//		btnAFDetect, btnProcessSignal, btnDiagnose, btnAutoProcessDiagnoseRequest, btnConfig);
+		
+		// 登录
 		btnLogin.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -64,6 +67,7 @@ public class CtrlPane extends HBox{
 			}
 		});
 		
+		// 开始查询
 		btnReload.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -79,6 +83,7 @@ public class CtrlPane extends HBox{
 			}
 		});
 		
+		// 继续查询
 		btnLoadNext.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -88,6 +93,7 @@ public class CtrlPane extends HBox{
 			}
 		});
 		
+		// 房颤检测
 		btnAFDetect.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {

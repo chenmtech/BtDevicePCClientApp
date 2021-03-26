@@ -148,6 +148,15 @@ public class Main extends Application implements IDbOperationCallback{
 		dbOperator.downloadRecord(type, createTime, devAddress);
 	}
 	
+	public void getAccountInfo(int creatorId) {
+		if(!ACCOUNT.isLogin()) {
+			login();
+			return;
+		}
+		
+		dbOperator.getAccountInfo(creatorId);
+	}
+	
 	public void autoProcessDiagnoseRequest() {
 		if(!ACCOUNT.isLogin()) {
 			login();
@@ -382,6 +391,20 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 	}
 	
+	@Override
+	public void onAccountInfoDownloaded(JSONObject json) {
+		if(json == null) {
+			infoPane.setInfo("下载账户信息失败");
+		} else {
+			System.out.println(json.toString());
+			AccountStage stage;
+			String userName = json.getString("userName");
+			userName = "***"+ userName.substring(userName.length()-4);
+			stage = new AccountStage(userName, json.getString("nickName"), json.getString("note"));
+			stage.show();
+		}
+	}
+	
 	private String createJsonFileName(String type, long createTime, String devAddress) {
 		return type + createTime + "(" +devAddress.replace(":", "-") + ")";		
 	}
@@ -520,6 +543,33 @@ public class Main extends Application implements IDbOperationCallback{
 			setResizable(false);
 			setScene(new Scene(dialogPane, 600, -1));
 			setTitle("请设置");
+		}
+	}
+	
+	private class AccountStage extends Stage{	
+		AccountStage(String userName, String nickName, String note) {
+			GridPane pane = new GridPane();
+			pane.setAlignment(Pos.CENTER);
+			pane.setPadding(new Insets(10,10,10,10));
+			pane.setHgap(5);
+			pane.setVgap(5);
+			
+
+			pane.add(new Label("用户名："), 0, 0);
+			pane.add(new Label(userName), 1, 0);
+			pane.add(new Label("昵称："), 0, 1);
+			pane.add(new Label(nickName), 1, 1);
+			pane.add(new Label("备注："), 0, 2);
+			pane.add(new Label(note), 1, 2);
+			
+			DialogPane dialogPane = new DialogPane();
+			dialogPane.setContent(pane);
+			
+			initOwner(primaryStage);
+			initModality(Modality.WINDOW_MODAL);
+			setResizable(false);
+			setScene(new Scene(dialogPane));
+			setTitle("账户信息");
 		}
 	}
 }

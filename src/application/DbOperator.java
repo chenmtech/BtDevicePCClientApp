@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.dbUtil.DbUtil;
 import com.cmtech.web.dbUtil.RecordWebUtil;
+import com.cmtech.web.btdevice.Account;
 
 import javafx.application.Platform;
 
@@ -87,4 +88,21 @@ public class DbOperator {
 		}
 	}
 
+	public void getAccountInfo(int creatorId) {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Account account = new Account(creatorId);
+				account.retrieve();
+				Platform.runLater(()->callback.onAccountInfoDownloaded(account.toJson()));
+			}
+		});
+		thread.start();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

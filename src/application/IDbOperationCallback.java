@@ -7,4 +7,5 @@ public interface IDbOperationCallback {
 	void onLoginUpdated(boolean success);
 	void onRecordBasicInfoListUpdated(JSONArray basicInfos);
 	void onRecordDownloaded(JSONObject json);
+	void onAccountInfoDownloaded(JSONObject json);
 }
