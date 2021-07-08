@@ -16,7 +16,6 @@ import java.util.Map;
 
 import dsp.seq.RealSeq;
 import dsp.util.SeqUtil;
-import dsp.util.TwoTuple;
 
 public class ALPDesigner {
 	//最小数值 
