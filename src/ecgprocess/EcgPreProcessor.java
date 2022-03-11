@@ -136,6 +136,9 @@ public class EcgPreProcessor {
 	}
 	
 	private static List<List<Float>> segmentEcgData(List<Float> normalizedEcgData, List<Long> rPos, List<Long> beatBeginPos) {
+		//System.out.println(rPos);
+		//System.out.println(beatBeginPos);
+		
 		List<List<Float>> segEcgData = new ArrayList<>();
 		
 		for(int i = 0; i < beatBeginPos.size()-1; i++) {
@@ -143,7 +146,7 @@ public class EcgPreProcessor {
 			
 			long begin = beatBeginPos.get(i);
 			long end = beatBeginPos.get(i+1);
-			long r = rPos.get(i);
+			long r = rPos.get(i+1);
 			long fillBefore = 0;
 			long fillAfter = 0;
 			float first = 0.0f;
@@ -160,6 +163,7 @@ public class EcgPreProcessor {
 				fillAfter = NUM_AFTER_R - (end-r) + 1;
 				last = normalizedEcgData.get((int)(end-1));
 			}
+			//System.out.println(fillBefore);
 			for(int j = 0; j < fillBefore; j++) {
 				oneBeat.add(first);
 			}
@@ -169,6 +173,7 @@ public class EcgPreProcessor {
 			for(int j = 0; j < fillAfter; j++) {
 				oneBeat.add(last);
 			}
+			System.out.println(oneBeat);
 			segEcgData.add(oneBeat);
 			//System.out.println(oneBeat.size());
 		}
