@@ -182,6 +182,7 @@ public class Main extends Application implements IDbOperationCallback{
 				JSONObject json = null;
 				try {
 					while(true) {
+						// 获取请求诊断的心电信号，返回信号的json数据
 						json = RecordWebUtil.applyForDiagnose();
 						if(json != null) {
 							long createTime = json.getLong("createTime");
@@ -198,23 +199,27 @@ public class Main extends Application implements IDbOperationCallback{
 				                }
 				                int sampleRate = json.getInt("sampleRate");
 				                
+				                // 对心电信号进行预处理，包括检测RR间隔，分割每个心动周期
 				                EcgPreProcessor ecgProc = new EcgPreProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
 				                File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
+				        			// 将分割结果保存到review.json文件中
 				        			reviewWriter.print(ecgProc.getResultJson().toString());
 				        			reviewWriter.flush();
+				        			
+				        			// 用诊断模型对预处理后的review.json文件进行处理
 					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
 					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
 									System.out.println(diagnoseModel.getDiagnoseResult());					        		
 				                    int abNum = diagnoseModel.getAbnormalBeat();
-				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心跳";
-				        			RecordWebUtil.uploadDiagnoseReport(createTime, devAddress, new Date().getTime(), content);	
+				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";
+				        			RecordWebUtil.updateDiagnose(createTime, devAddress, EcgDiagnoseModel.VER, new Date().getTime(), content);	
 				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-									RecordWebUtil.uploadDiagnoseReport(createTime, devAddress, new Date().getTime(), "系统异常");
+									RecordWebUtil.updateDiagnose(createTime, devAddress, EcgDiagnoseModel.VER, new Date().getTime(), "远程诊断系统异常");
 								}
 			        		}
 			        		json = null;

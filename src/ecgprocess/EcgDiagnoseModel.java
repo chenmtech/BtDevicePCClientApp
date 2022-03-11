@@ -13,6 +13,9 @@ public class EcgDiagnoseModel {
 	private static final EcgDiagnoseModel instance = new EcgDiagnoseModel();
 	
 	private static final double NORMAL_THRESH = 0.1;
+	
+	public static final String VER = "1.0";
+	
 	private List<List<Double>> predictList = new ArrayList<>();
 	private String errStr;
 	
@@ -32,11 +35,21 @@ public class EcgDiagnoseModel {
 		return errStr;
 	}
 	
-	public void process(String pythonExe, String diagNoseScript, String diagNNModel, String reviewFile) throws IOException, InterruptedException {
+	/**
+	 * 调用Python脚本，加载神经网络模型，对review.json文件中的心电数据进行处理
+	 * 用输入流来截取结果
+	 * @param pythonExe -Python.exe文件名
+	 * @param diagnoseScript -Python脚本文件名
+	 * @param diagNNModel -神经网络模型.h5文件名
+	 * @param reviewFile -review.json文件名
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void process(String pythonExe, String diagnoseScript, String diagNNModel, String reviewFile) throws IOException, InterruptedException {
 		Process proc;
-    	String[] args = {pythonExe, diagNoseScript, diagNNModel, reviewFile};
+    	String[] args = {pythonExe, diagnoseScript, diagNNModel, reviewFile};
         proc = Runtime.getRuntime().exec(args);// 执行py文件
-        //用输入输出流来截取结果
+        //用输入流来截取结果
         BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
         StringBuilder builder = new StringBuilder();
         String line = null;

@@ -71,9 +71,9 @@ public class RWaveDetecter {
 
             if(maxI < minI && Math.abs(maxV) > MAX_PEAK_MIN_PEAK_RATIO*Math.abs(minV)) {
                 rPos.add(qrsBegin + maxI);
-                System.out.println("MaxV peak > "+ MAX_PEAK_MIN_PEAK_RATIO + " minV peak");
+                //System.out.println("MaxV peak > "+ MAX_PEAK_MIN_PEAK_RATIO + " minV peak");
             } else {
-                System.out.println("MaxV peak <= "+ MAX_PEAK_MIN_PEAK_RATIO + " minV peak");
+                //System.out.println("MaxV peak <= "+ MAX_PEAK_MIN_PEAK_RATIO + " minV peak");
                 List<Float> qrsDelta2 = delta2.subList((int)qrsBegin, (int)qrsEnd); // QRS波的二阶差分数据
 
                 rlt = MathUtil.floatMin(qrsDelta2);
