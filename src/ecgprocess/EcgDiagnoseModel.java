@@ -66,6 +66,8 @@ public class EcgDiagnoseModel {
         err.close();
         proc.waitFor();
         errStr = errBuilder.toString();
+        System.out.println(errStr);
+        System.out.println(builder.toString());
         JSONObject resultJson = new JSONObject(builder.toString());
         JSONArray predictArr = (JSONArray) resultJson.get("Predict");
         //JSONArray resultArr = (JSONArray) resultJson.get("Result");
