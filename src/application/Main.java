@@ -69,10 +69,11 @@ public class Main extends Application implements IDbOperationCallback{
 			root.setBottom(ctrlPane);
 			root.setPadding(new Insets(10,10,10,10));
 			
-			Scene scene = new Scene(root,1600,800);
+			Scene scene = new Scene(root,600,400);
 			recordPane.prefWidthProperty().bind(scene.widthProperty());
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(TITLE);
+			primaryStage.setMaximized(true);//全屏显示
 			primaryStage.show();
 			
 			dbOperator  = new DbOperator(this);
@@ -179,25 +180,25 @@ public class Main extends Application implements IDbOperationCallback{
 		thAutoProcess = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONObject json = null;
+				JSONObject ecgJson = null;
 				try {
 					while(true) {
 						// 获取请求诊断的心电信号，返回信号的json数据
-						json = RecordWebUtil.applyForDiagnose();
-						if(json != null) {
-							long createTime = json.getLong("createTime");
-							String devAddress = json.getString("devAddress");
-							RecordType type = RecordType.fromCode(json.getInt("recordTypeCode"));
+						ecgJson = RecordWebUtil.applyForDiagnose();
+						if(ecgJson != null) {
+							long createTime = ecgJson.getLong("createTime");
+							String devAddress = ecgJson.getString("devAddress");
+							RecordType type = RecordType.fromCode(ecgJson.getInt("recordTypeCode"));
 			                if(type != RecordType.ECG) {
 			                	Platform.runLater(()->infoPane.setInfo("对不起，暂时只能处理心电信号。"));
 			                } else {
-				                String ecgStr = json.getString("ecgData");
+				                String ecgStr = ecgJson.getString("ecgData");
 				                String[] ecgDataStr = ecgStr.split(",");
 				                List<Short> ecgData = new ArrayList<>();
 				                for(String str : ecgDataStr) {
 				                	ecgData.add(Short.parseShort(str));
 				                }
-				                int sampleRate = json.getInt("sampleRate");
+				                int sampleRate = ecgJson.getInt("sampleRate");
 				                
 				                // 对心电信号进行预处理，包括检测RR间隔，分割每个心动周期
 				                EcgPreProcessor ecgProc = new EcgPreProcessor();
@@ -210,25 +211,27 @@ public class Main extends Application implements IDbOperationCallback{
 				        			reviewWriter.flush();
 				        			
 				        			// 用诊断模型对预处理后的review.json文件进行处理
-					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
-					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
-									System.out.println(diagnoseModel.getDiagnoseResult());					        		
-				                    int abNum = diagnoseModel.getAbnormalBeat();
-				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";
-				        			RecordWebUtil.updateDiagnose(createTime, devAddress, EcgDiagnoseModel.VER, new Date().getTime(), content);	
+//					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
+//					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
+//									System.out.println(diagnoseModel.getDiagnoseResult());					        		
+//				                    int abNum = diagnoseModel.getAbnormalBeat();
+//				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";
+				        			
+				        			String content = "平均心率：" + ecgProc.getAverageHr() + "次/分钟\n";
+				                    RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), content);	
 				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-									RecordWebUtil.updateDiagnose(createTime, devAddress, EcgDiagnoseModel.VER, new Date().getTime(), "远程诊断系统异常");
+									RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), "远程诊断系统异常");
 								}
 			        		}
-			        		json = null;
+			        		ecgJson = null;
 						}
 						Thread.sleep(1000);
 					}
 				} catch(InterruptedException ex) {
-					if(json != null)
-						System.out.println("正在处理:" + json.toString());
+					if(ecgJson != null)
+						System.out.println("正在处理:" + ecgJson.toString());
 					System.out.println("心电诊断被终止");
 				} 
 			}
