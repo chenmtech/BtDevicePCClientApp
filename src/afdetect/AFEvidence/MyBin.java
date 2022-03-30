@@ -44,5 +44,4 @@ public class MyBin {
 	public int hashCode() {
 		return x + 17*y;
 	}	
-	
 }

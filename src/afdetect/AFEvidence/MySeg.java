@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class MySeg {
-	private List<MyBin> bins = new LinkedList<>();
+private List<MyBin> bins = new LinkedList<>();
 	
 	public MySeg() {
 	}

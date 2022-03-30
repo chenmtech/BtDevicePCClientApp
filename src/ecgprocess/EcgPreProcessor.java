@@ -23,7 +23,7 @@ public class EcgPreProcessor {
 	private static final int NUM_AFTER_R = 150;
 	private static final int MIN_QRS_NUM = 6;
 	
-	private static final int INVALID_HR = 0;
+	public static final int INVALID_HR = 0;
 
 	private int sampleRate;
 	private Map<String, Object> processResult = new HashMap<>();

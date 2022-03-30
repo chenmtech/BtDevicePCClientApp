@@ -1,5 +1,9 @@
 package application;
 	
+import static afdetect.IAFDetector.AF;
+import static afdetect.IAFDetector.NON_AF;
+import static ecgprocess.EcgPreProcessor.INVALID_HR;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,6 +24,7 @@ import com.cmtech.web.connection.ConnectionPoolFactory;
 import com.cmtech.web.dbUtil.RecordWebUtil;
 
 import afdetect.AFDetectExecutor;
+import afdetect.AFEvidence.MyAFEvidence;
 import ecgprocess.EcgDiagnoseModel;
 import ecgprocess.EcgPreProcessor;
 import javafx.application.Application;
@@ -192,6 +197,7 @@ public class Main extends Application implements IDbOperationCallback{
 			                if(type != RecordType.ECG) {
 			                	Platform.runLater(()->infoPane.setInfo("对不起，暂时只能处理心电信号。"));
 			                } else {
+			                	Platform.runLater(()->infoPane.setInfo("正在处理心电信号。"));
 				                String ecgStr = ecgJson.getString("ecgData");
 				                String[] ecgDataStr = ecgStr.split(",");
 				                List<Short> ecgData = new ArrayList<>();
@@ -204,34 +210,69 @@ public class Main extends Application implements IDbOperationCallback{
 				                EcgPreProcessor ecgProc = new EcgPreProcessor();
 				                ecgProc.process(ecgData, sampleRate);
 				                
+				                int aveHr = ecgProc.getAverageHr();
+				                List<Double> RR = ecgProc.getRRIntervalInMs();
+
+				                String strHrResult = "";
+				                if(aveHr != INVALID_HR) {
+				                    strHrResult = "平均心率：" + aveHr + "次/分钟，";
+				                    if(aveHr > 100)
+				                        strHrResult += "心动过速。\n";
+				                    else if(aveHr < 50)
+				                        strHrResult += "心动过缓。\n";
+				                    else
+				                        strHrResult += "心率正常。\n";
+				                }
+
+				                MyAFEvidence afEvidence = new MyAFEvidence();
+				                afEvidence.process(RR);
+				                int afe = afEvidence.getAFEvidence();
+				                int classify = afEvidence.getClassifyResult();
+				                //ViseLog.e("afe:" + afe + "classify:" + classify);
+
+				                StringBuilder builder = new StringBuilder();
+				                if(classify == AF) {
+				                    builder.append("发现房颤风险。");
+				                } else if(classify == NON_AF){
+				                    builder.append("未发现房颤风险。");
+				                } else {
+				                    builder.append("由于信号质量问题，无法判断房颤风险。");
+				                }
+				                builder.append("(风险值：").append(afe).append(")\n");
+				                String strAFEResult = builder.toString();
+				                
+				                String content = strHrResult + strAFEResult;
+				                
 				                File reviewFile = new File(reviewJsonFileName);
 				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
 				        			// 将分割结果保存到review.json文件中
-				        			reviewWriter.print(ecgProc.getResultJson().toString());
-				        			reviewWriter.flush();
+				        			JSONObject rltJson = ecgProc.getResultJson();
+				        			if(rltJson != null) {
+				        				reviewWriter.print(rltJson.toString());
+				        				reviewWriter.flush();
 				        			
-				        			// 用诊断模型对预处理后的review.json文件进行处理
-//					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
-//					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
-//									System.out.println(diagnoseModel.getDiagnoseResult());					        		
-//				                    int abNum = diagnoseModel.getAbnormalBeat();
-//				                    String content = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";
 				        			
-				        			String content = "平均心率：" + ecgProc.getAverageHr() + "次/分钟\n";
-				                    RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), content);	
+					        			// 用诊断模型对预处理后的review.json文件进行处理
+	//					        		EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
+	//					        		diagnoseModel.process(args[0], args[1], args[2], args[3]);
+	//									System.out.println(diagnoseModel.getDiagnoseResult());					        		
+	//				                    int abNum = diagnoseModel.getAbnormalBeat();
+	//				                    String strModelResult = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";		
+	//			        				content += strModelResult;
+				        			}				        			
+				                    
 				        		} catch (IOException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
-									RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), "远程诊断系统异常");
 								}
+				        		RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), content);	
+				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
 			        		}
 			        		ecgJson = null;
 						}
 						Thread.sleep(1000);
 					}
 				} catch(InterruptedException ex) {
-					if(ecgJson != null)
-						System.out.println("正在处理:" + ecgJson.toString());
 					System.out.println("心电诊断被终止");
 				} 
 			}
