@@ -163,18 +163,23 @@ public class Main extends Application implements IDbOperationCallback{
 		dbOperator.getAccountInfo(creatorId);
 	}
 	
+	/**
+	 * 自动处理诊断请求
+	 */
 	public void autoProcessDiagnoseRequest() {
 		if(!ACCOUNT.isLogin()) {
 			login();
 			return;
 		}
-		
-		String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
-		
+
 		if(properties == null) {
 			System.out.println("properties is null.");
 			return;
 		}
+		
+		// 下载下来的需要诊断处理的记录JSON文件名
+		String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
+		
 		
 		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
         for(String str : args) {
@@ -182,29 +187,30 @@ public class Main extends Application implements IDbOperationCallback{
         		return;
         }
 		
+        // 自动处理记录的线程
 		thAutoProcess = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONObject ecgJson = null;
+				JSONObject jsonObj = null;
 				try {
 					while(true) {
-						// 获取请求诊断的心电信号，返回信号的json数据
-						ecgJson = RecordWebUtil.applyForDiagnose();
-						if(ecgJson != null) {
-							long createTime = ecgJson.getLong("createTime");
-							String devAddress = ecgJson.getString("devAddress");
-							RecordType type = RecordType.fromCode(ecgJson.getInt("recordTypeCode"));
+						// 获取请求诊断的记录JSON Object
+						jsonObj = RecordWebUtil.applyForDiagnose();
+						if(jsonObj != null) {
+							long createTime = jsonObj.getLong("createTime");
+							String devAddress = jsonObj.getString("devAddress");
+							RecordType type = RecordType.fromCode(jsonObj.getInt("recordTypeCode"));
 			                if(type != RecordType.ECG) {
 			                	Platform.runLater(()->infoPane.setInfo("对不起，暂时只能处理心电信号。"));
 			                } else {
 			                	Platform.runLater(()->infoPane.setInfo("正在处理心电信号。"));
-				                String ecgStr = ecgJson.getString("ecgData");
+				                String ecgStr = jsonObj.getString("ecgData");
 				                String[] ecgDataStr = ecgStr.split(",");
 				                List<Short> ecgData = new ArrayList<>();
 				                for(String str : ecgDataStr) {
 				                	ecgData.add(Short.parseShort(str));
 				                }
-				                int sampleRate = ecgJson.getInt("sampleRate");
+				                int sampleRate = jsonObj.getInt("sampleRate");
 				                
 				                // 对心电信号进行预处理，包括检测RR间隔，分割每个心动周期
 				                EcgPreProcessor ecgProc = new EcgPreProcessor();
@@ -268,7 +274,7 @@ public class Main extends Application implements IDbOperationCallback{
 				        		RecordWebUtil.updateDiagnose(createTime, devAddress, "1.0", new Date().getTime(), content);	
 				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
 			        		}
-			        		ecgJson = null;
+			        		jsonObj = null;
 						}
 						Thread.sleep(1000);
 					}
