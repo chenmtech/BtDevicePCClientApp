@@ -1,5 +1,8 @@
 package afdetect.AFEvidence;
 
+import static afdetect.IAFDetector.AF;
+import static afdetect.IAFDetector.NON_AF;
+
 import java.util.List;
 
 import afdetect.IAFDetector;
@@ -51,6 +54,19 @@ public class MyAFEvidence implements IAFDetector {
     @Override
     public int getClassifyResult() {
         return classifyResult;
+    }
+    
+    public String getResultStr() {
+    	StringBuilder builder = new StringBuilder();
+        if(classifyResult == AF) {
+            builder.append("发现房颤风险");
+        } else if(classifyResult == NON_AF){
+            builder.append("未发现房颤风险");
+        } else {
+            builder.append("由于信号质量问题，无法判断房颤风险");
+        }
+        builder.append("(风险值：").append(afe).append(");");
+        return builder.toString();
     }
 
     private void clear() {

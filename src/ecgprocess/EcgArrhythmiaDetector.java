@@ -9,8 +9,13 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class EcgDiagnoseModel {
-	private static final EcgDiagnoseModel instance = new EcgDiagnoseModel();
+/**
+ * 心电信号心律异常检测器
+ * @author gdmc
+ *
+ */
+public class EcgArrhythmiaDetector {
+	private static final EcgArrhythmiaDetector instance = new EcgArrhythmiaDetector();
 	
 	private static final double NORMAL_THRESH = 0.1;
 	
@@ -19,11 +24,11 @@ public class EcgDiagnoseModel {
 	private List<List<Double>> predictList = new ArrayList<>();
 	private String errStr;
 	
-	private EcgDiagnoseModel() {
+	private EcgArrhythmiaDetector() {
 		
 	}
 	
-	public static EcgDiagnoseModel getInstance() {
+	public static EcgArrhythmiaDetector getInstance() {
 		return instance;
 	}
 	
