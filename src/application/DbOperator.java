@@ -12,8 +12,17 @@ import com.cmtech.web.btdevice.Account;
 
 import javafx.application.Platform;
 
+/**
+ * 数据库操作器类
+ * 用于提供应用层所需的数据库操作
+ * @author gdmc
+ *
+ */
 public class DbOperator {
-	public static final String DEFAULT_DB_ADDRESS = "203.195.137.198:3306";
+	// 缺省的数据库服务器地址
+	private static final String DEFAULT_DB_ADDRESS = "203.195.137.198:3306";
+	
+	// 数据库操作回调接口对象，为应用层提供数据库操作的回调处理
 	private final IDbOperationCallback callback;
 	
 	public DbOperator(IDbOperationCallback callback) {
@@ -25,6 +34,11 @@ public class DbOperator {
 		DbUtil.setDbAddress(dbAddress);
 	}
 	
+	/**
+	 * 测试用户名和密码是否能建立连接
+	 * @param userName：用户名
+	 * @param password：密码
+	 */
 	public void testConnect(String userName, String password) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
@@ -32,10 +46,10 @@ public class DbOperator {
 				DbUtil.setDbUser(userName, password);
 				Connection conn = DbUtil.connect();
 				if(conn != null) {
-					Platform.runLater(()->callback.onLoginUpdated(true));
+					Platform.runLater(()->callback.onLogin(true));
 					DbUtil.disconnect(conn);
 				} else {
-					Platform.runLater(()->callback.onLoginUpdated(false));
+					Platform.runLater(()->callback.onLogin(false));
 				}				
 			}
 		});
@@ -48,7 +62,15 @@ public class DbOperator {
 		}
 	}
 	
-	public void queryRecord(RecordType type, int creatorId, long fromTime, String noteSearchStr, int num) {
+	/**
+	 * 下载符合条件的BasicRecords
+	 * @param type：记录类型
+	 * @param creatorId：记录创建者ID
+	 * @param fromTime：起始时间
+	 * @param filterStr：过滤字符串
+	 * @param num：记录数
+	 */
+	public void downloadBasicRecords(RecordType type, int creatorId, long fromTime, String filterStr, int num) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -58,8 +80,8 @@ public class DbOperator {
 				} else {
 					types = new RecordType[] {type};
 				}
-				JSONArray basicInfoJsons = RecordWebUtil.downloadList(types, creatorId, fromTime, noteSearchStr, num);
-				Platform.runLater(()->callback.onRecordBasicInfoListUpdated(basicInfoJsons));
+				JSONArray basicRecords = RecordWebUtil.downloadBasicRecords(types, creatorId, fromTime, filterStr, num);
+				Platform.runLater(()->callback.onBasicRecordsDownloaded(basicRecords));
 			}
 		});
 		thread.start();
@@ -71,6 +93,12 @@ public class DbOperator {
 		}
 	}
 	
+	/**
+	 * 下载指定的记录
+	 * @param type：记录类型
+	 * @param createTime：起始时间
+	 * @param devAddress：设备地址
+	 */
 	public void downloadRecord(RecordType type, long createTime, String devAddress) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
@@ -88,6 +116,10 @@ public class DbOperator {
 		}
 	}
 
+	/**
+	 * 获取账户信息
+	 * @param creatorId：账户ID
+	 */
 	public void getAccountInfo(int creatorId) {
 		Thread thread = new Thread(new Runnable() {
 			@Override

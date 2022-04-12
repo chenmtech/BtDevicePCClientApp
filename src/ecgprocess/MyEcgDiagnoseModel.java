@@ -11,22 +11,24 @@ import afdetect.AFEvidence.MyAFEvidence;
  *
  */
 public class MyEcgDiagnoseModel {
-    public static final String VER = "1.1";
+    public static final String VER = "1.1.0";
 
     private final MyAFEvidence afEvidence;
     
     private String diagnoseResult = "";
+    
+    private int aveHr;
 
     public MyEcgDiagnoseModel() {
         afEvidence = new MyAFEvidence();
     }
-
-    public String getVer() {
-        return VER;
-    }
     
     public String getDiagnoseResult() {
     	return diagnoseResult;
+    }
+    
+    public int getAveHr() {
+    	return aveHr;
     }
 
     public boolean process(List<Short> ecgData, int sampleRate) {
@@ -34,7 +36,7 @@ public class MyEcgDiagnoseModel {
         EcgPreProcessor preProcessor = new EcgPreProcessor();
         preProcessor.process(ecgData, sampleRate);
 
-        int aveHr = preProcessor.getAverageHr();
+        aveHr = preProcessor.getAverageHr();
         List<Double> RR = preProcessor.getRRIntervalInMs();
 
         // 处理心率异常

@@ -2,8 +2,6 @@ package util;
 
 import java.util.List;
 
-import util.Pair;
-
 public class MathUtil {
 	private MathUtil() {
 		

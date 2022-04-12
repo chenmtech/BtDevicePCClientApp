@@ -128,7 +128,7 @@ public class Main extends Application implements IDbOperationCallback{
 		fromTime = searchTime;
 
 		int num = 20;
-		dbOperator.queryRecord(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadBasicRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void loadNext(RecordType type, int creatorId, String noteSearchStr) {
@@ -138,7 +138,7 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 		
 		int num = 20;
-		dbOperator.queryRecord(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadBasicRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void saveRecord(RecordType type, long createTime, String devAddress) {
@@ -191,7 +191,7 @@ public class Main extends Application implements IDbOperationCallback{
 				try {
 					while(true) {
 						// 获取请求诊断的记录JSON Object
-						jsonObj = RecordWebUtil.applyForDiagnose();
+						jsonObj = RecordWebUtil.applyForDiagnose(MyEcgDiagnoseModel.VER);
 						if(jsonObj != null) {
 							long createTime = jsonObj.getLong("createTime");
 							String devAddress = jsonObj.getString("devAddress");
@@ -239,7 +239,7 @@ public class Main extends Application implements IDbOperationCallback{
 									e.printStackTrace();
 								}
 								*/
-				        		RecordWebUtil.updateDiagnose(createTime, devAddress, diagnoseModel.getVer(), new Date().getTime(), content);	
+				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, new Date().getTime(), content);	
 				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
 			        		}
 			        		jsonObj = null;
@@ -329,7 +329,7 @@ public class Main extends Application implements IDbOperationCallback{
 			//return;
 		}
 		
-		FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件","*.json");
+		FileChooser.ExtensionFilter filter =  new FileChooser.ExtensionFilter("JSON文件", "*.json");
         File file = FileDialogUtil.openFileDialog(primaryStage, true, null, null, filter);
 
         if(file != null){
@@ -370,7 +370,7 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	@Override
-	public void onLoginUpdated(boolean success) {
+	public void onLogin(boolean success) {
 		if(success)
 			infoPane.setInfo("登录成功");
 		else
@@ -379,7 +379,7 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	@Override
-	public void onRecordBasicInfoListUpdated(JSONArray basicInfos) {
+	public void onBasicRecordsDownloaded(JSONArray basicInfos) {
 		if(basicInfos == null || basicInfos.isEmpty()) {
 			infoPane.setInfo("没有记录可加载。");
 		} else {
