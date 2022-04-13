@@ -173,11 +173,11 @@ public class Main extends Application implements IDbOperationCallback{
 			return;
 		}
 		
-		// 下载下来的需要诊断处理的记录JSON文件名
-		String reviewJsonFileName = System.getProperty("java.io.tmpdir") + "review.json";
+		// 下载下来的需要诊断处理的记录数据JSON文件名
+		String ecgDataJsonFile = System.getProperty("java.io.tmpdir") + "review.json";
 		
 		
-		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), reviewJsonFileName};
+		String[] args = new String[] { properties.getPythonExe(), properties.getEcgScript(), properties.getEcgNNModel(), ecgDataJsonFile};
         for(String str : args) {
         	if(str == null || str.equals(""))
         		return;
@@ -193,53 +193,35 @@ public class Main extends Application implements IDbOperationCallback{
 						// 获取请求诊断的记录JSON Object
 						jsonObj = RecordWebUtil.applyForDiagnose(MyEcgDiagnoseModel.VER);
 						if(jsonObj != null) {
-							long createTime = jsonObj.getLong("createTime");
-							String devAddress = jsonObj.getString("devAddress");
 							RecordType type = RecordType.fromCode(jsonObj.getInt("recordTypeCode"));
 			                if(type != RecordType.ECG) {
 			                	Platform.runLater(()->infoPane.setInfo("对不起，暂时只能处理心电信号。"));
 			                } else {
 			                	Platform.runLater(()->infoPane.setInfo("正在处理心电信号。"));
+
+			                	// 获取原始心电数据
 				                String ecgStr = jsonObj.getString("ecgData");
 				                String[] ecgDataStr = ecgStr.split(",");
 				                List<Short> ecgData = new ArrayList<>();
 				                for(String str : ecgDataStr) {
 				                	ecgData.add(Short.parseShort(str));
 				                }
-				                int sampleRate = jsonObj.getInt("sampleRate");
 				                
-				                MyEcgDiagnoseModel diagnoseModel = new MyEcgDiagnoseModel();
+				                // 获取采样率
+				                int sampleRate = jsonObj.getInt("sampleRate");				                
 				                
-				                String content = "";
-				                if(diagnoseModel.process(ecgData, sampleRate)) {
-				                	content = diagnoseModel.getDiagnoseResult();
+				                // 对心电信号进行诊断，并获取诊断结果
+				                MyEcgDiagnoseModel diagnoseModel = new MyEcgDiagnoseModel();				                
+				                String diagnoseResult = "";
+				                if(diagnoseModel.process(ecgData, sampleRate, properties)) {
+				                	diagnoseResult = diagnoseModel.getDiagnoseResult();
 				                }
-				                
-				                /*
-				                File reviewFile = new File(reviewJsonFileName);
-				        		try(PrintWriter reviewWriter = new PrintWriter(reviewFile)) {
-				        			// 将分割结果保存到review.json文件中
-				        			JSONObject rltJson = ecgProc.getResultJson();
-				        			if(rltJson != null) {
-				        				reviewWriter.print(rltJson.toString());
-				        				reviewWriter.flush();
-				        			
-			        			
-					        			// 用诊断模型对预处理后的review.json文件进行处理
-				        				EcgDiagnoseModel diagnoseModel = EcgDiagnoseModel.getInstance();
-				        				diagnoseModel.process(args[0], args[1], args[2], args[3]);
-				        				System.out.println(diagnoseModel.getDiagnoseResult());					        		
-				        				int abNum = diagnoseModel.getAbnormalBeat();
-				        				String strModelResult = (abNum == 0) ? "正常窦性心律" : "发现" + abNum + "次异常心律";		
-				        				content += strModelResult;
-				        			}				        			
-				                    
-				        		} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								*/
-				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, new Date().getTime(), content);	
+
+				                // 更新诊断报告
+								long createTime = jsonObj.getLong("createTime");
+								String devAddress = jsonObj.getString("devAddress");
+				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, new Date().getTime(), diagnoseResult);	
+				        		
 				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
 			        		}
 			        		jsonObj = null;

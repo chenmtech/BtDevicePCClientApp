@@ -10,7 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * 心电信号心律异常检测器
+ * 心电信号心律失常检测器
  * @author gdmc
  *
  */
@@ -44,23 +44,27 @@ public class EcgArrhythmiaDetector {
 	 * 调用Python脚本，加载神经网络模型，对review.json文件中的心电数据进行处理
 	 * 用输入流来截取结果
 	 * @param pythonExe -Python.exe文件名
-	 * @param diagnoseScript -Python脚本文件名
+	 * @param ecgDiagnoseScript -心电诊断Python脚本文件名
 	 * @param diagNNModel -神经网络模型.h5文件名
-	 * @param reviewFile -review.json文件名
+	 * @param ecgDataFile -待诊断的心电数据json文件名
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void process(String pythonExe, String diagnoseScript, String diagNNModel, String reviewFile) throws IOException, InterruptedException {
-		Process proc;
-    	String[] args = {pythonExe, diagnoseScript, diagNNModel, reviewFile};
-        proc = Runtime.getRuntime().exec(args);// 执行py文件
+	public void process(String pythonExe, String ecgDiagnoseScript, String diagNNModel, String ecgDataFile) throws IOException, InterruptedException {
+		// 准备python调用参数
+		String[] args = {pythonExe, ecgDiagnoseScript, diagNNModel, ecgDataFile};
+    	
+		// 执行py文件
+		Process proc = Runtime.getRuntime().exec(args);
+		
         //用输入流来截取结果
         BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-        StringBuilder builder = new StringBuilder();
+        StringBuilder outBuilder = new StringBuilder();
         String line = null;
         while ((line = in.readLine()) != null) {
-            builder.append(line);
+            outBuilder.append(line);
         }
+        
         BufferedReader err = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
         StringBuilder errBuilder = new StringBuilder();
         String errLine = null;
@@ -69,16 +73,19 @@ public class EcgArrhythmiaDetector {
         }
         in.close();
         err.close();
+        
+        // 等待执行完毕
         proc.waitFor();
-        errStr = errBuilder.toString();
-        System.out.println(errStr);
-        System.out.println(builder.toString());
-        JSONObject resultJson = new JSONObject(builder.toString());
-        JSONArray predictArr = (JSONArray) resultJson.get("Predict");
+
+        System.out.println(errBuilder.toString());
+        System.out.println(outBuilder.toString());
+        
+        // 获取诊断输出，提取预测结果
+        JSONObject outJson = new JSONObject(outBuilder.toString());
+        JSONArray predictArr = (JSONArray) outJson.get("Predict");
         //JSONArray resultArr = (JSONArray) resultJson.get("Result");
         
-        predictList.clear();
-        
+        predictList.clear();        
         for(int i = 0; i < predictArr.length(); i++) {
         	List<Double> tmpList = new ArrayList<>();
         	JSONArray arr = (JSONArray)predictArr.get(i);
