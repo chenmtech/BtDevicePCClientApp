@@ -20,6 +20,8 @@ public class MyEcgDiagnoseModel {
 	// 诊断模型算法的版本号，通过更新更大的版本号，可以对服务器上的心电信号进行重新诊断
     public static final String VER = "1.1.1";
     
+    public static final String REPORT_PROVIDER = "广东医 生物医学工程系";
+    
     private static final String DEFAULT_ECG_DATA_FILE_NAME = "ecgData.json";
 
     private final MyAFEvidence afEvidence;

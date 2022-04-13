@@ -220,7 +220,8 @@ public class Main extends Application implements IDbOperationCallback{
 				                // 更新诊断报告
 								long createTime = jsonObj.getLong("createTime");
 								String devAddress = jsonObj.getString("devAddress");
-				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, new Date().getTime(), diagnoseResult);	
+				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, 
+				        				MyEcgDiagnoseModel.REPORT_PROVIDER, new Date().getTime(), diagnoseResult);	
 				        		
 				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
 			        		}
