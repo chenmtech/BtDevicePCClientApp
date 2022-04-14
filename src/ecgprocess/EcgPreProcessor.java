@@ -173,7 +173,7 @@ public class EcgPreProcessor {
 			for(int j = 0; j < fillAfter; j++) {
 				oneBeat.add(last);
 			}
-			System.out.println(oneBeat);
+			//System.out.println(oneBeat);
 			segEcgData.add(oneBeat);
 			//System.out.println(oneBeat.size());
 		}

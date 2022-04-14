@@ -107,6 +107,12 @@ public class EcgArrhythmiaDetector {
 		return abNum;
 	}
 	
+	public String getResultStr() {
+		int abNum = getAbnormalBeat();
+		String strATMResult = (abNum == 0) ? "窦性心律;" : "发现" + abNum + "次异常心动周期;";
+		return strATMResult;
+	}
+	
 	public List<Integer> getDiagnoseResult() {
 		List<Integer> result = new ArrayList<>();
 		for(int i = 0; i < predictList.size(); i++) {
