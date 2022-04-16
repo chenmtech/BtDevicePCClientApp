@@ -77,8 +77,8 @@ public class EcgArrhythmiaDetector {
         // 等待执行完毕
         proc.waitFor();
 
-        System.out.println(errBuilder.toString());
-        System.out.println(outBuilder.toString());
+        //System.out.println(errBuilder.toString());
+        //System.out.println(outBuilder.toString());
         
         // 获取诊断输出，提取预测结果
         JSONObject outJson = new JSONObject(outBuilder.toString());

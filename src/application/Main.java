@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -220,6 +221,10 @@ public class Main extends Application implements IDbOperationCallback{
 				                // 更新诊断报告
 								long createTime = jsonObj.getLong("createTime");
 								String devAddress = jsonObj.getString("devAddress");
+								Date date = new Date(createTime);
+								SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+								String dateStr = sdf.format(date);
+								System.out.println("更新诊断报告："+ dateStr + "->" + diagnoseResult);
 				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, 
 				        				MyEcgDiagnoseModel.REPORT_PROVIDER, new Date().getTime(), diagnoseResult);	
 				        		

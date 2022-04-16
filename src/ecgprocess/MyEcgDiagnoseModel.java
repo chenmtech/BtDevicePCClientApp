@@ -96,7 +96,7 @@ public class MyEcgDiagnoseModel {
 			}
  		}
  		diagnoseResult = strATMResult + strAFEResult + strHrResult;
- 		System.out.println(diagnoseResult);
+ 		
         return true;
     }
 }
