@@ -231,7 +231,7 @@ public class Main extends Application implements IDbOperationCallback{
 			        		}
 			        		jsonObj = null;
 						}
-						Thread.sleep(1000);
+						Thread.sleep(5000);
 					}
 				} catch(InterruptedException ex) {
 					System.out.println("心电诊断被终止");
