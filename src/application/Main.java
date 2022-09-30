@@ -128,7 +128,7 @@ public class Main extends Application implements IDbOperationCallback{
 		fromTime = searchTime;
 
 		int num = 20;
-		dbOperator.downloadBasicRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadRecordList(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void loadNext(RecordType type, int creatorId, String noteSearchStr) {
@@ -138,7 +138,7 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 		
 		int num = 20;
-		dbOperator.downloadBasicRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadRecordList(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void saveRecord(RecordType type, long createTime, String devAddress) {
@@ -366,7 +366,7 @@ public class Main extends Application implements IDbOperationCallback{
 	}
 	
 	@Override
-	public void onBasicRecordsDownloaded(JSONArray basicInfos) {
+	public void onRecordListDownloaded(JSONArray basicInfos) {
 		if(basicInfos == null || basicInfos.isEmpty()) {
 			infoPane.setInfo("没有记录可加载。");
 		} else {

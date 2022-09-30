@@ -11,10 +11,10 @@ public interface IDbOperationCallback {
 	void onLogin(boolean success);
 	
 	/**
-	 * 响应BasicRecord下载列表操作
-	 * @param basicRecords: 获取的BasicRecords打包为JSONArray
+	 * 响应下载记录列表操作
+	 * @param records: 获取的记录列表打包为JSONArray
 	 */
-	void onBasicRecordsDownloaded(JSONArray basicRecords);
+	void onRecordListDownloaded(JSONArray records);
 	
 	/**
 	 * 响应记录下载操作
