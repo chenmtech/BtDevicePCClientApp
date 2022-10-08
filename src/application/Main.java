@@ -128,7 +128,7 @@ public class Main extends Application implements IDbOperationCallback{
 		fromTime = searchTime;
 
 		int num = 20;
-		dbOperator.downloadRecordList(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void loadNext(RecordType type, int creatorId, String noteSearchStr) {
@@ -138,7 +138,7 @@ public class Main extends Application implements IDbOperationCallback{
 		}
 		
 		int num = 20;
-		dbOperator.downloadRecordList(type, creatorId, fromTime, noteSearchStr.trim(), num);
+		dbOperator.downloadRecords(type, creatorId, fromTime, noteSearchStr.trim(), num);
 	}
 	
 	public void saveRecord(RecordType type, long createTime, String devAddress) {

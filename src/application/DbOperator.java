@@ -63,14 +63,14 @@ public class DbOperator {
 	}
 	
 	/**
-	 * 下载满足条件的记录列表
+	 * 下载满足条件的记录
 	 * @param type：记录类型
 	 * @param creatorId：记录创建者ID
 	 * @param fromTime：起始时间
 	 * @param filterStr：过滤字符串
 	 * @param num：记录数
 	 */
-	public void downloadRecordList(RecordType type, int creatorId, long fromTime, String filterStr, int num) {
+	public void downloadRecords(RecordType type, int creatorId, long fromTime, String filterStr, int num) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -80,8 +80,8 @@ public class DbOperator {
 				} else {
 					types = new RecordType[] {type};
 				}
-				JSONArray basicRecords = RecordWebUtil.downloadRecordList(types, creatorId, fromTime, filterStr, num);
-				Platform.runLater(()->callback.onRecordListDownloaded(basicRecords));
+				JSONArray jsonRecords = RecordWebUtil.download(types, creatorId, fromTime, filterStr, num);
+				Platform.runLater(()->callback.onRecordListDownloaded(jsonRecords));
 			}
 		});
 		thread.start();
