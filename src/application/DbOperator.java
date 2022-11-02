@@ -6,8 +6,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
-import com.cmtech.web.dbUtil.DbUtil;
-import com.cmtech.web.dbUtil.RecordWebUtil;
+import com.cmtech.web.servlet.RecordWebCommandService;
+import com.cmtech.web.util.DbUtil;
 import com.cmtech.web.btdevice.Account;
 
 import javafx.application.Platform;
@@ -80,7 +80,7 @@ public class DbOperator {
 				} else {
 					types = new RecordType[] {type};
 				}
-				JSONArray jsonRecords = RecordWebUtil.download(types, creatorId, fromTime, filterStr, num);
+				JSONArray jsonRecords = RecordWebCommandService.download(types, creatorId, fromTime, filterStr, num);
 				Platform.runLater(()->callback.onRecordListDownloaded(jsonRecords));
 			}
 		});
@@ -103,7 +103,7 @@ public class DbOperator {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				JSONObject json = RecordWebUtil.download(type, createTime, devAddress);
+				JSONObject json = RecordWebCommandService.download(type, createTime, devAddress);
 				Platform.runLater(()->callback.onRecordDownloaded(json));
 			}
 		});

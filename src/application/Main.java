@@ -18,7 +18,7 @@ import org.json.JSONObject;
 
 import com.cmtech.web.btdevice.RecordType;
 import com.cmtech.web.connection.ConnectionPoolFactory;
-import com.cmtech.web.dbUtil.RecordWebUtil;
+import com.cmtech.web.servlet.RecordWebCommandService;
 
 import afdetect.AFDetectExecutor;
 import ecgprocess.EcgPreProcessor;
@@ -191,7 +191,7 @@ public class Main extends Application implements IDbOperationCallback{
 				try {
 					while(true) {
 						// 获取请求诊断的记录JSON Object
-						jsonObj = RecordWebUtil.applyForDiagnose(MyEcgDiagnoseModel.VER);
+						jsonObj = RecordWebCommandService.applyForDiagnose(MyEcgDiagnoseModel.VER);
 						if(jsonObj != null) {
 							RecordType type = RecordType.fromCode(jsonObj.getInt("recordTypeCode"));
 			                if(type != RecordType.ECG) {
@@ -224,7 +224,7 @@ public class Main extends Application implements IDbOperationCallback{
 								SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 								String dateStr = sdf.format(date);
 								System.out.println("更新诊断报告："+ dateStr + "->" + diagnoseResult);
-				        		RecordWebUtil.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, 
+				        		RecordWebCommandService.updateDiagnoseReport(RecordType.ECG, createTime, devAddress, MyEcgDiagnoseModel.VER, 
 				        				MyEcgDiagnoseModel.REPORT_PROVIDER, new Date().getTime(), diagnoseResult);	
 				        		
 				        		Platform.runLater(()->infoPane.setInfo("心电信号处理完毕。"));
